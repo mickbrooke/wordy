@@ -5,6 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    base: '/wordy/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
