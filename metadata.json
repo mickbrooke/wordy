@@ -1,0 +1,6 @@
+{
+  "name": "QuadraWord - 4x4 Word Swipe Game",
+  "description": "An interactive 4x4 grid word puzzle where you swipe letters to discover and collect 4-letter words.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
