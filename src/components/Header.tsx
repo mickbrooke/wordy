@@ -1,5 +1,5 @@
-import React from 'react';
-import { Volume2, VolumeX, RotateCcw, HelpCircle, Palette } from 'lucide-react';
+import React, { useState } from 'react';
+import { Volume2, VolumeX, RotateCcw, HelpCircle, Palette, Share2, Check } from 'lucide-react';
 import { GameTheme } from '../types.ts';
 
 interface HeaderProps {
@@ -7,6 +7,8 @@ interface HeaderProps {
   onToggleSound: () => void;
   onNewGame: () => void;
   onOpenHowToPlay: () => void;
+  onShare: () => void;
+  isCopied?: boolean;
   theme: GameTheme;
   onChangeTheme: (theme: GameTheme) => void;
 }
@@ -16,6 +18,8 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleSound,
   onNewGame,
   onOpenHowToPlay,
+  onShare,
+  isCopied = false,
   theme,
   onChangeTheme
 }) => {
@@ -90,10 +94,29 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={onOpenHowToPlay}
-            className="md:hidden p-2 rounded-lg border border-black/10 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-slate-700 dark:text-slate-200 cursor-pointer"
+            className="md:hidden p-2 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-slate-700 dark:text-slate-200 cursor-pointer"
             aria-label="Instructions"
           >
             <HelpCircle className="w-4 h-4" />
+          </button>
+
+          {/* Share Button with Copied Feedback */}
+          <button
+            onClick={onShare}
+            title="Share QuadraWord with friends"
+            className="p-2 sm:px-3 sm:py-1.5 text-xs font-medium rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            {isCopied ? (
+              <>
+                <Check className="w-4 h-4 text-emerald-500" />
+                <span className="hidden sm:inline text-emerald-600 dark:text-emerald-400 font-semibold">Copied!</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="w-4 h-4 text-amber-500" />
+                <span className="hidden sm:inline">Share</span>
+              </>
+            )}
           </button>
 
           <button

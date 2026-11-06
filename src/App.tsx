@@ -24,7 +24,7 @@ import {
   WordValidationResult,
   ScoreBreakdown
 } from './types.ts';
-import { RotateCcw, Trophy, Zap, Star } from 'lucide-react';
+import { RotateCcw, Trophy, Zap, Star, Share2 } from 'lucide-react';
 
 export default function App() {
   // Board state
@@ -256,6 +256,35 @@ export default function App() {
     });
   };
 
+  const [isCopied, setIsCopied] = useState(false);
+
+  // Share Game with friends via Web Share API or Clipboard copy
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: 'QuadraWord - 4x4 Word Swipe Game',
+      text: `Can you beat my score of ${score} pts on QuadraWord? Swipe letters to create 4-letter words!`,
+      url: shareUrl,
+    };
+
+    if (navigator.share && typeof navigator.canShare === 'function' && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch {
+        // User cancelled or share aborted, fall through to clipboard
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2500);
+    } catch {
+      window.prompt('Copy this link to share QuadraWord:', shareUrl);
+    }
+  };
+
   // Background styling according to theme
   const themeClasses: Record<GameTheme, string> = {
     slate: 'bg-slate-950 text-slate-100',
@@ -271,6 +300,8 @@ export default function App() {
         onToggleSound={handleToggleSound}
         onNewGame={startNewGame}
         onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
+        onShare={handleShare}
+        isCopied={isCopied}
         theme={theme}
         onChangeTheme={setTheme}
       />
@@ -368,19 +399,29 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsTimedGameOver(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-black/10 dark:border-white/10 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer text-slate-700 dark:text-slate-300"
+                >
+                  Inspect Words
+                </button>
+                <button
+                  onClick={startNewGame}
+                  className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Play Again</span>
+                </button>
+              </div>
+
               <button
-                onClick={() => setIsTimedGameOver(false)}
-                className="flex-1 py-2.5 rounded-xl border border-black/10 dark:border-white/10 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer text-slate-700 dark:text-slate-300"
+                onClick={handleShare}
+                className="w-full py-2 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5"
               >
-                Inspect Words
-              </button>
-              <button
-                onClick={startNewGame}
-                className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Play Again</span>
+                <Share2 className="w-3.5 h-3.5" />
+                <span>{isCopied ? 'Link Copied to Clipboard!' : 'Share Your Score with Friends'}</span>
               </button>
             </div>
           </div>
