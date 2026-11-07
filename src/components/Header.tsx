@@ -64,7 +64,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
           <span className="text-slate-300 dark:text-slate-700" aria-hidden="true">·</span>
           <span className="text-xs text-slate-500 dark:text-slate-400">
-            Swipe 4 letters (horizontal &amp; vertical only) to collect words
+            Swipe 4 to 16 letters (horizontal &amp; vertical only) to collect words
           </span>
         </div>
 

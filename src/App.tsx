@@ -263,7 +263,7 @@ export default function App() {
     const shareUrl = window.location.href;
     const shareData = {
       title: 'QuadraWord - 4x4 Word Swipe Game',
-      text: `Can you beat my score of ${score} pts on QuadraWord? Swipe letters to create 4-letter words!`,
+      text: `Can you beat my score of ${score} pts on QuadraWord? Swipe letters to create words up to 16 letters long!`,
       url: shareUrl,
     };
 

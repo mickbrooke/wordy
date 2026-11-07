@@ -32,20 +32,40 @@ export const LETTER_RARITY_CONFIG: Record<string, { bonus: number; label: string
 };
 
 /**
- * Calculate base points strictly based on word length
+ * Calculate base points strictly based on word length (4 to 16 characters)
+ * Longer words scale exponentially to award higher skill and vocabulary
  */
 export function getBaseLengthPoints(length: number): number {
+  if (length < 4) return 0;
   switch (length) {
-    case 3:
-      return 60;
     case 4:
       return 100;
     case 5:
-      return 220;
+      return 200;
     case 6:
-      return 400;
+      return 350;
+    case 7:
+      return 550;
+    case 8:
+      return 800;
+    case 9:
+      return 1150;
+    case 10:
+      return 1550;
+    case 11:
+      return 2050;
+    case 12:
+      return 2650;
+    case 13:
+      return 3350;
+    case 14:
+      return 4150;
+    case 15:
+      return 5050;
+    case 16:
+      return 6500; // Complete 16-tile board swipe!
     default:
-      return length * 25;
+      return 100 + (length - 4) * 200;
   }
 }
 

@@ -1,4 +1,10 @@
 import { WordValidationResult } from '../types.ts';
+import {
+  FIVE_LETTER_WORDS,
+  SIX_LETTER_WORDS,
+  SEVEN_LETTER_WORDS,
+  EIGHT_PLUS_LETTER_WORDS
+} from './extendedWords.ts';
 
 // Comprehensive standard English dictionary of 4-letter words (TWL06 / ENABLE / Scrabble standard)
 export const FOUR_LETTER_WORDS: string[] = [
@@ -712,14 +718,40 @@ export const WORD_DEFINITIONS: Record<string, string> = {
   "ZOOM": "Move or travel very quickly, or change magnification smoothly."
 };
 
-// Fast lookup Set of all valid 4-letter words
-export const VALID_WORDS_SET = new Set<string>(FOUR_LETTER_WORDS.map(w => w.toUpperCase()));
+// Combined dictionary of valid English words spanning 4 to 16 letters
+export const ALL_DICTIONARY_WORDS: string[] = [
+  ...FOUR_LETTER_WORDS,
+  ...FIVE_LETTER_WORDS,
+  ...SIX_LETTER_WORDS,
+  ...SEVEN_LETTER_WORDS,
+  ...EIGHT_PLUS_LETTER_WORDS
+];
+
+// Fast lookup Set of all valid 4-to-16-letter words
+export const VALID_WORDS_SET = new Set<string>(ALL_DICTIONARY_WORDS.map(w => w.toUpperCase()));
+
+// Precomputed Prefix Set to allow DFS search pruning in O(1) time
+export const PREFIX_SET = new Set<string>();
+for (const word of VALID_WORDS_SET) {
+  for (let i = 1; i <= word.length; i++) {
+    PREFIX_SET.add(word.slice(0, i));
+  }
+}
 
 /**
- * Check if a word is in the standard English 4-letter dictionary
+ * Check if any valid word begins with the given prefix
+ * Used to immediately prune DFS branches in board solving
+ */
+export function hasWordWithPrefix(prefix: string): boolean {
+  if (!prefix) return true;
+  return PREFIX_SET.has(prefix.toUpperCase());
+}
+
+/**
+ * Check if a word is in the standard English dictionary (4 to 16 letters)
  */
 export function isValidWord(word: string): boolean {
-  if (!word || word.length !== 4) return false;
+  if (!word || word.length < 4 || word.length > 16) return false;
   return VALID_WORDS_SET.has(word.toUpperCase());
 }
 
@@ -732,7 +764,7 @@ export function getWordDefinition(word: string): string | undefined {
 
 /**
  * Comprehensive Word Validation Feature
- * Validates word length, standard dictionary existence, and duplicate status
+ * Validates word length (4-16 chars), standard dictionary existence, and duplicate status
  */
 export function validateWordSubmission(
   word: string,
@@ -740,13 +772,15 @@ export function validateWordSubmission(
 ): WordValidationResult {
   const upper = (word || '').toUpperCase().trim();
 
-  // Length check: only 4-letter words are valid in this game
-  if (upper.length !== 4) {
+  // Length check: words can be between 4 and 16 characters long
+  if (upper.length < 4 || upper.length > 16) {
     return {
       isValid: false,
       word: upper,
       status: 'INVALID_LENGTH',
-      message: `Word has ${upper.length} letters. QuadraWord requires exactly 4 letters.`,
+      message: upper.length < 4
+        ? `"${upper}" has only ${upper.length} letters. Words must be at least 4 letters.`
+        : `"${upper}" has ${upper.length} letters. Words cannot exceed 16 letters.`,
     };
   }
 
@@ -767,7 +801,7 @@ export function validateWordSubmission(
       isValid: false,
       word: upper,
       status: 'NOT_IN_DICTIONARY',
-      message: `"${upper}" is not found in the standard English 4-letter dictionary.`,
+      message: `"${upper}" is not found in the English dictionary.`,
     };
   }
 

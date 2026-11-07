@@ -1,5 +1,5 @@
 import { BoardTile, SolvableWord } from '../types.ts';
-import { VALID_WORDS_SET, getWordDefinition } from './dictionary.ts';
+import { VALID_WORDS_SET, hasWordWithPrefix, getWordDefinition } from './dictionary.ts';
 
 // Standard 16 Boggle-style dice for balanced, high-yield English letter grids
 const BOGGLE_DICE: string[][] = [
@@ -102,19 +102,30 @@ export function areNeighbors(
 }
 
 /**
- * Depth-First-Search to find all legal 4-letter words on the current board
+ * Depth-First-Search with prefix-pruning to find all legal words (4 to 16 characters)
+ * on the current board using strictly horizontal and vertical paths (no diagonals)
  */
 export function findAllSolvableWords(letters: string[]): SolvableWord[] {
   const wordPathsMap = new Map<string, number[][]>();
 
   function dfs(currIndex: number, currentWord: string, visitedPath: number[]) {
-    if (visitedPath.length === 4) {
+    // Prefix pruning: If no word in dictionary starts with currentWord, stop immediately!
+    if (!hasWordWithPrefix(currentWord)) {
+      return;
+    }
+
+    // If word is valid length (4 to 16 letters) and in dictionary, add to solvable map
+    if (visitedPath.length >= 4 && visitedPath.length <= 16) {
       if (VALID_WORDS_SET.has(currentWord)) {
         if (!wordPathsMap.has(currentWord)) {
           wordPathsMap.set(currentWord, []);
         }
         wordPathsMap.get(currentWord)!.push([...visitedPath]);
       }
+    }
+
+    // Stop exploring once full 16-tile board length reached
+    if (visitedPath.length === 16) {
       return;
     }
 
@@ -143,8 +154,8 @@ export function findAllSolvableWords(letters: string[]): SolvableWord[] {
     });
   });
 
-  // Sort alphabetically
-  return results.sort((a, b) => a.word.localeCompare(b.word));
+  // Sort by length descending, then alphabetically
+  return results.sort((a, b) => b.word.length - a.word.length || a.word.localeCompare(b.word));
 }
 
 /**

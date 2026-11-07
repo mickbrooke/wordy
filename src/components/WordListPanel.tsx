@@ -34,7 +34,7 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
   activeReplayPath,
   score
 }) => {
-  const [sortMode, setSortMode] = useState<'recent' | 'alpha' | 'score'>('recent');
+  const [sortMode, setSortMode] = useState<'recent' | 'length' | 'score' | 'alpha'>('recent');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [showAllSolvable, setShowAllSolvable] = useState<boolean>(false);
   const [showScoringGuide, setShowScoringGuide] = useState<boolean>(false);
@@ -53,6 +53,9 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
     .sort((a, b) => {
       if (sortMode === 'recent') {
         return b.timestamp - a.timestamp;
+      }
+      if (sortMode === 'length') {
+        return b.word.length - a.word.length || b.points - a.points || a.word.localeCompare(b.word);
       }
       if (sortMode === 'score') {
         return b.points - a.points;
@@ -141,12 +144,12 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
               <div className="p-3 bg-amber-500/10 dark:bg-amber-950/30 rounded-xl border border-amber-500/20 space-y-2">
                 <div className="flex items-center justify-between font-bold text-amber-800 dark:text-amber-300">
                   <span>QuadraWord Scoring System</span>
-                  <span className="text-[10px] uppercase tracking-wide">TWL Dictionary</span>
+                  <span className="text-[10px] uppercase tracking-wide">English Dictionary (4-16 L)</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
                   <div>
                     <span className="font-semibold text-slate-900 dark:text-white">Word Length:</span>
-                    <p>4 letters = 100 base pts</p>
+                    <p>4 letters = 100 base pts, up to 6,500 pts for 16-letter board swipe!</p>
                   </div>
                   <div>
                     <span className="font-semibold text-slate-900 dark:text-white">Rare Letter Bonus:</span>
@@ -169,10 +172,10 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
         {/* Controls: Sort and Search */}
         <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-black/5 dark:border-white/5">
           {/* Segmented Sort Controls */}
-          <div className="flex items-center p-0.5 bg-black/5 dark:bg-white/10 rounded-lg text-xs font-medium">
+          <div className="flex items-center p-0.5 bg-black/5 dark:bg-white/10 rounded-lg text-xs font-medium overflow-x-auto scrollbar-none">
             <button
               onClick={() => setSortMode('recent')}
-              className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              className={`px-2 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
                 sortMode === 'recent'
                   ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-semibold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
@@ -181,8 +184,18 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
               Recent
             </button>
             <button
+              onClick={() => setSortMode('length')}
+              className={`px-2 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                sortMode === 'length'
+                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+              }`}
+            >
+              Length
+            </button>
+            <button
               onClick={() => setSortMode('score')}
-              className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              className={`px-2 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
                 sortMode === 'score'
                   ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-semibold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
@@ -192,7 +205,7 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
             </button>
             <button
               onClick={() => setSortMode('alpha')}
-              className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              className={`px-2 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
                 sortMode === 'alpha'
                   ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-semibold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
@@ -225,7 +238,7 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
               No words discovered yet
             </p>
             <p className="text-xs text-slate-400 max-w-xs mt-1">
-              Swipe across 4 adjacent letters on the grid to create valid words. Points are awarded based on word length, rarer letters, and speed!
+              Swipe or tap 4 to 16 adjacent letters (horizontal & vertical) to create valid words. Longer words earn huge exponential bonus points!
             </p>
           </div>
         ) : displayedWords.length === 0 ? (
@@ -259,10 +272,16 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
                   <div className="flex items-center gap-2.5 min-w-0">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                     <div>
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-display font-extrabold text-base tracking-wider text-slate-900 dark:text-white">
                           {item.word}
                         </span>
+
+                        {/* Length badge */}
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 rounded font-mono">
+                          {item.word.length}L
+                        </span>
+
                         <span className="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono-nums">
                           +{item.points} pts
                         </span>
@@ -366,10 +385,10 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
         <form onSubmit={handleTestWordCheck} className="flex items-center gap-2">
           <input
             type="text"
-            maxLength={4}
+            maxLength={16}
             value={testWordInput}
             onChange={(e) => setTestWordInput(e.target.value.toUpperCase())}
-            placeholder="Validate 4-letter word..."
+            placeholder="Validate 4-16 letter word..."
             className="flex-1 px-2.5 py-1 text-xs rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 uppercase font-mono tracking-wider focus:outline-none focus:ring-1 focus:ring-amber-500"
           />
           <button
@@ -395,7 +414,7 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
             )}
             <div>
               <p className="font-semibold">
-                &quot;{testResult.word}&quot; is {testResult.isValid ? 'a valid 4-letter English word!' : 'NOT in the 4-letter dictionary.'}
+                &quot;{testResult.word}&quot; is {testResult.isValid ? 'a valid English word!' : 'NOT in the dictionary (4-16 letters).'}
               </p>
               {testResult.definition && (
                 <p className="text-[10px] opacity-80 mt-0.5">{testResult.definition}</p>

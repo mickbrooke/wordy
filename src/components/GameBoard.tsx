@@ -4,7 +4,7 @@ import { Sparkles, Lightbulb, Undo2, Zap, Star } from 'lucide-react';
 import { BoardTile, WordValidationResult, ScoreBreakdown } from '../types.ts';
 import { areNeighbors } from '../data/boardGenerator.ts';
 import { soundEffects } from '../utils/audio.ts';
-import { LETTER_RARITY_CONFIG } from '../utils/scoring.ts';
+import { LETTER_RARITY_CONFIG, getBaseLengthPoints } from '../utils/scoring.ts';
 
 interface GameBoardProps {
   tiles: BoardTile[];
@@ -49,7 +49,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     text: string;
     type: 'idle' | 'success' | 'warning' | 'error';
     details?: string;
-  }>({ text: 'Swipe 4 letters (horizontal & vertical) to form a word', type: 'idle' });
+  }>({ text: 'Swipe 4 to 16 letters (horizontal & vertical) to form a word', type: 'idle' });
 
   // Floating score alert
   const [floatingScore, setFloatingScore] = useState<FloatingScoreData | null>(null);
@@ -80,14 +80,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     return () => window.removeEventListener('resize', updateTileCenters);
   }, [updateTileCenters, tiles]);
 
-  // Handle word evaluation and validation
+  // Handle word evaluation and validation (4 to 16 characters)
   const evaluateWordPath = useCallback((path: number[]) => {
-    if (path.length !== 4) {
+    if (path.length < 4 || path.length > 16) {
       if (path.length > 0) {
         setStatusMessage({
-          text: 'Word must be exactly 4 letters',
+          text: path.length < 4 ? 'Word must be at least 4 letters' : 'Word cannot exceed 16 letters',
           type: 'warning',
-          details: `${path.length}/4 letters drawn`
+          details: `${path.length} letters selected (need 4-16)`
         });
         soundEffects.playClear();
         setShakeKey(prev => prev + 1);
@@ -101,8 +101,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     const result = onWordCompleted(word, path);
 
     if (result.isValid && result.scoreBreakdown) {
-      const { totalPoints, baseLengthPoints, rareLetterBonus, speedBonus } = result.scoreBreakdown;
-      let breakdownText = `+${totalPoints} pts (Base: ${baseLengthPoints}`;
+      const { totalPoints, baseLengthPoints, rareLetterBonus, speedBonus, wordLength } = result.scoreBreakdown;
+      let breakdownText = `+${totalPoints} pts (${wordLength} letters: ${baseLengthPoints} base`;
       if (rareLetterBonus > 0) breakdownText += ` + Rare: ${rareLetterBonus}`;
       if (speedBonus > 0) breakdownText += ` + ⚡Speed: ${speedBonus}`;
       breakdownText += ')';
@@ -132,9 +132,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         });
       } else if (result.status === 'NOT_IN_DICTIONARY') {
         setStatusMessage({
-          text: `"${word}" is not in the standard English dictionary`,
+          text: `"${word}" is not in the English dictionary`,
           type: 'error',
-          details: 'Only valid standard 4-letter words are accepted'
+          details: 'Only valid standard English words (4-16 letters) are accepted'
         });
       } else {
         setStatusMessage({
@@ -215,9 +215,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           return prev.slice(0, -1);
         }
 
-        // Add next tile if adjacent, not already in path, and path length < 4
+        // Add next tile if adjacent, not already in path, and path length < 16
         if (!prev.includes(targetIndex) && areNeighbors(lastIndex, targetIndex)) {
-          if (prev.length < 4) {
+          if (prev.length < 16) {
             const nextPath = [...prev, targetIndex];
             soundEffects.playSwipeStep(nextPath.length - 1);
             try {
@@ -226,8 +226,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               // Ignore
             }
 
-            // If 4 letters reached, complete swipe and evaluate!
-            if (nextPath.length === 4) {
+            // If maximum 16 tiles reached (full grid swipe!), auto complete and evaluate!
+            if (nextPath.length === 16) {
               setIsDragging(false);
               setPointerPos(null);
               setTimeout(() => {
@@ -244,20 +244,20 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [isDragging, evaluateWordPath]);
 
-  // Pointer Up finishes swipe gesture
+  // Pointer Up finishes swipe gesture and evaluates if >= 4 letters
   const handlePointerUp = useCallback(() => {
     if (!isDragging) return;
     setIsDragging(false);
     setPointerPos(null);
 
-    // If path was 4, it may have already evaluated or evaluate now
-    if (selectedPath.length === 4) {
+    // If path is at least 4 letters, evaluate!
+    if (selectedPath.length >= 4 && selectedPath.length <= 16) {
       evaluateWordPath(selectedPath);
     } else if (selectedPath.length > 0) {
       // Shorter than 4 letters, reset
       soundEffects.playClear();
       setSelectedPath([]);
-      setStatusMessage({ text: 'Swipe 4 letters (horizontal & vertical) to form a word', type: 'idle' });
+      setStatusMessage({ text: 'Need at least 4 letters (horizontal & vertical)', type: 'idle' });
     }
   }, [isDragging, selectedPath, evaluateWordPath]);
 
@@ -293,11 +293,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       // Adjacent tile
       const lastIndex = prev[prev.length - 1];
       if (!prev.includes(index) && areNeighbors(lastIndex, index)) {
-        if (prev.length < 4) {
+        if (prev.length < 16) {
           const next = [...prev, index];
           soundEffects.playSwipeStep(next.length - 1);
 
-          if (next.length === 4) {
+          if (next.length === 16) {
             setTimeout(() => {
               evaluateWordPath(next);
             }, 100);
@@ -340,57 +340,82 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           }`}
         >
           <div className="flex items-center justify-between">
-            {/* Current 4-letter slots with rare letter indicators */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              {[0, 1, 2, 3].map((slotIdx) => {
-                const letter = currentLetters[slotIdx];
-                const rarity = letter ? LETTER_RARITY_CONFIG[letter]?.bonus || 0 : 0;
-
-                return (
-                  <div key={slotIdx} className="flex flex-col items-center">
-                    <div
-                      className={`relative w-9 h-10 sm:w-10 sm:h-11 rounded-lg flex items-center justify-center font-display text-xl sm:text-2xl font-bold transition-all ${
-                        letter
-                          ? 'bg-amber-500 text-white shadow-sm scale-105'
-                          : 'border-2 border-dashed border-black/15 dark:border-white/20 text-transparent'
-                      }`}
-                    >
-                      {letter || '•'}
-                      {letter && rarity > 0 && (
-                        <span className="absolute -top-1.5 -right-1.5 px-1 py-0.2 bg-purple-600 text-[9px] font-extrabold text-white rounded-full shadow-xs">
-                          +{rarity}
-                        </span>
-                      )}
-                    </div>
+            {/* Dynamic letter composition slots (4 to 16 letters) */}
+            {activePath.length === 0 ? (
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                {[0, 1, 2, 3].map((slotIdx) => (
+                  <div
+                    key={slotIdx}
+                    className="w-8 h-9 sm:w-9 sm:h-10 rounded-lg border-2 border-dashed border-black/15 dark:border-white/20 flex items-center justify-center text-slate-400/50 font-display font-bold text-sm"
+                  >
+                    •
                   </div>
-                );
-              })}
-            </div>
-
-            {/* Live point preview & letter count */}
-            <div className="text-right pl-2">
-              <div className="flex items-center justify-end gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                <span className="font-mono-nums">{activePath.length}/4</span>
-                <span>letters</span>
-                {activePath.length === 4 && (
-                  <span className="ml-1 text-emerald-600 dark:text-emerald-400 font-bold font-mono-nums">
-                    (100{currentRareBonus > 0 ? ` +${currentRareBonus} rare` : ''} pts)
-                  </span>
-                )}
+                ))}
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 ml-1">
+                  4 - 16 letters
+                </span>
               </div>
-              <p
-                className={`text-[11px] truncate max-w-[150px] sm:max-w-[180px] ${
-                  statusMessage.type === 'success'
-                    ? 'text-emerald-600 dark:text-emerald-400 font-medium'
-                    : statusMessage.type === 'error'
-                    ? 'text-rose-600 dark:text-rose-400 font-medium'
-                    : statusMessage.type === 'warning'
-                    ? 'text-amber-600 dark:text-amber-400 font-medium'
-                    : 'text-slate-500 dark:text-slate-400'
-                }`}
-              >
-                {statusMessage.text}
-              </p>
+            ) : (
+              <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto max-w-[210px] sm:max-w-[250px] py-0.5 scrollbar-none">
+                {activePath.map((tileIdx, stepIdx) => {
+                  const letter = tiles[tileIdx]?.letter || '';
+                  const rarity = LETTER_RARITY_CONFIG[letter]?.bonus || 0;
+
+                  return (
+                    <div key={`ribbon-${tileIdx}-${stepIdx}`} className="flex flex-col items-center shrink-0">
+                      <div className="relative min-w-[28px] h-8 sm:min-w-[32px] sm:h-9 px-1 rounded-lg flex items-center justify-center font-display text-base sm:text-lg font-bold bg-amber-500 text-white shadow-xs transition-all">
+                        {letter}
+                        {rarity > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 px-1 py-0.2 bg-purple-600 text-[8px] font-extrabold text-white rounded-full shadow-xs">
+                            +{rarity}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Live point preview, submit action button, and letter count */}
+            <div className="flex items-center gap-2 pl-2 text-right shrink-0">
+              {/* Tap-mode explicit submit button when word is at least 4 letters */}
+              {selectedPath.length >= 4 && !highlightedPath && (
+                <button
+                  onClick={() => evaluateWordPath(selectedPath)}
+                  className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Submit</span>
+                </button>
+              )}
+
+              <div>
+                <div className="flex items-center justify-end gap-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  <span className="font-mono-nums font-bold text-amber-600 dark:text-amber-400">
+                    {activePath.length}
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">/16</span>
+                  {activePath.length >= 4 && (
+                    <span className="ml-1 text-emerald-600 dark:text-emerald-400 font-bold font-mono-nums text-[11px]">
+                      ({getBaseLengthPoints(activePath.length)}{currentRareBonus > 0 ? `+${currentRareBonus}` : ''}p)
+                    </span>
+                  )}
+                </div>
+                <p
+                  className={`text-[10px] sm:text-[11px] truncate max-w-[130px] sm:max-w-[160px] ${
+                    statusMessage.type === 'success'
+                      ? 'text-emerald-600 dark:text-emerald-400 font-medium'
+                      : statusMessage.type === 'error'
+                      ? 'text-rose-600 dark:text-rose-400 font-medium'
+                      : statusMessage.type === 'warning'
+                      ? 'text-amber-600 dark:text-amber-400 font-medium'
+                      : 'text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  {statusMessage.text}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -399,7 +424,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             <div className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-between border-t border-black/5 dark:border-white/5 pt-1">
               <span>{statusMessage.details}</span>
               <span className="font-medium text-amber-600 dark:text-amber-400">
-                Standard English Dictionary
+                English Dictionary (4-16 L)
               </span>
             </div>
           )}
@@ -442,7 +467,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           )}
 
           {/* Active laser line to the pointer while dragging */}
-          {isDragging && pointerPos && activePath.length > 0 && activePath.length < 4 && tileCenters[activePath[activePath.length - 1]] && (
+          {isDragging && pointerPos && activePath.length > 0 && activePath.length < 16 && tileCenters[activePath[activePath.length - 1]] && (
             <line
               x1={tileCenters[activePath[activePath.length - 1]].x}
               y1={tileCenters[activePath[activePath.length - 1]].y}

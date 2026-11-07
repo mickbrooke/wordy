@@ -44,7 +44,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose 
                 Swipe Horizontally &amp; Vertically (No Diagonals)
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Drag up, down, left, or right across adjacent tiles to connect 4 letters. Diagonal moves are not allowed. You can drag backwards anytime to undo.
+                Drag up, down, left, or right across adjacent tiles to connect between 4 and 16 letters. Diagonal moves are strictly forbidden. You can drag backwards anytime to undo.
               </p>
             </div>
           </div>
@@ -56,12 +56,12 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose 
             <div>
               <div className="flex items-center gap-1.5">
                 <p className="font-semibold text-slate-900 dark:text-white">
-                  Dictionary Word Validation
+                  Dictionary Word Validation (4 to 16 Letters)
                 </p>
                 <BookCheck className="w-3.5 h-3.5 text-emerald-500" />
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Every drawn 4-letter word is checked against a standard English dictionary. Only legitimate valid words are approved and added to your discovered list!
+                Every drawn word (from 4 up to all 16 tiles) is checked against a comprehensive English dictionary. Only legitimate valid words are approved and added to your discovered list!
               </p>
             </div>
           </div>
@@ -81,7 +81,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2 pt-2 border-t border-black/5 dark:border-white/5 text-[11px]">
                 <div className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-black/5 dark:border-white/5">
                   <span className="font-bold text-slate-900 dark:text-white block">Word Length</span>
-                  <span className="text-slate-500 dark:text-slate-400">4 letters = 100 base pts</span>
+                  <span className="text-slate-500 dark:text-slate-400">4L: 100 pts ... up to 6,500 pts for 16L!</span>
                 </div>
 
                 <div className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-black/5 dark:border-white/5">
