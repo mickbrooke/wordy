@@ -768,8 +768,7 @@ export function getWordDefinition(word: string): string | undefined {
  */
 export function validateWordSubmission(
   word: string,
-  alreadyFoundWords: Set<string>,
-  targetWordsSet?: Set<string>
+  alreadyFoundWords: Set<string>
 ): WordValidationResult {
   const upper = (word || '').toUpperCase().trim();
 
@@ -806,18 +805,7 @@ export function validateWordSubmission(
     };
   }
 
-  // Board target words check (when puzzle is limited to maximum 20 words)
-  if (targetWordsSet && !targetWordsSet.has(upper)) {
-    return {
-      isValid: false,
-      word: upper,
-      status: 'NOT_IN_TARGET_WORDS',
-      message: `"${upper}" is valid, but not one of this board's target words!`,
-      definition: getWordDefinition(upper),
-    };
-  }
-
-  // Success
+  // Success — valid words ALWAYS work and earn points!
   return {
     isValid: true,
     word: upper,

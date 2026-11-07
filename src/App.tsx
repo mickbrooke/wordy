@@ -128,11 +128,6 @@ export default function App() {
     }
   };
 
-  // Target words and outstanding words calculation
-  const targetWordsSet = useMemo(() => {
-    return new Set(board.solvableWords.map(w => w.word));
-  }, [board.solvableWords]);
-
   const outstandingWords = useMemo(() => {
     const foundSet = new Set(foundWords.map(w => w.word));
     return board.solvableWords.filter(w => !foundSet.has(w.word));
@@ -157,8 +152,8 @@ export default function App() {
       const upper = word.toUpperCase();
       const foundWordsSet = new Set(foundWords.map(entry => entry.word));
 
-      // 1. Validate submission against standard English dictionary and this board's target words
-      const validation = validateWordSubmission(upper, foundWordsSet, targetWordsSet);
+      // 1. Validate submission against standard English dictionary (valid words ALWAYS work!)
+      const validation = validateWordSubmission(upper, foundWordsSet);
 
       if (!validation.isValid) {
         if (validation.status === 'ALREADY_FOUND') {
@@ -201,6 +196,25 @@ export default function App() {
       setStreak(currentStreak);
       setLastWordTime(now);
 
+      // Ensure the board's solvableWords includes this valid word so it counts and checks off
+      setBoard(prev => {
+        if (prev.solvableWords.some(w => w.word === upper)) {
+          return prev;
+        }
+        return {
+          ...prev,
+          solvableWords: [
+            ...prev.solvableWords,
+            {
+              word: upper,
+              paths: [[...path]],
+              definition: validation.definition || getWordDefinition(upper),
+              estimatedPoints: pointsEarned,
+            },
+          ].sort((a, b) => b.word.length - a.word.length || a.word.localeCompare(b.word)),
+        };
+      });
+
       // Audio & Confetti feedback
       soundEffects.playWordSuccess();
       fireWordConfetti();
@@ -226,7 +240,7 @@ export default function App() {
         scoreBreakdown
       };
     },
-    [foundWords, lastWordTime, streak, board.solvableWords.length, mode, isTimerRunning, timeRemaining, isTimedGameOver, targetWordsSet]
+    [foundWords, lastWordTime, streak, board.solvableWords.length, mode, isTimerRunning, timeRemaining, isTimedGameOver]
   );
 
   // Request a hint for an undiscovered word (prioritizes 5, 6, 7, and 8-letter words)

@@ -150,12 +150,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           type: 'warning',
           details: 'Only new words score points'
         });
-      } else if (result.status === 'NOT_IN_TARGET_WORDS') {
-        setStatusMessage({
-          text: `"${word}" is not on this board's target words!`,
-          type: 'warning',
-          details: `Find the ${totalWordsCount || 20} target words to clear the board`
-        });
       } else if (result.status === 'NOT_IN_DICTIONARY') {
         setStatusMessage({
           text: `"${word}" is not in the English dictionary`,

@@ -50,7 +50,6 @@ export type WordValidationStatus =
   | 'VALID'
   | 'INVALID_LENGTH'
   | 'NOT_IN_DICTIONARY'
-  | 'NOT_IN_TARGET_WORDS'
   | 'ALREADY_FOUND';
 
 export interface WordValidationResult {
