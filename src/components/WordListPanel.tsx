@@ -33,7 +33,6 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
   activeReplayPath,
   score
 }) => {
-  const [sortMode, setSortMode] = useState<'length' | 'score' | 'alpha'>('length');
   const [showAllSolvable, setShowAllSolvable] = useState<boolean>(false);
   const [showScoringGuide, setShowScoringGuide] = useState<boolean>(false);
 
@@ -49,16 +48,8 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
   const foundCount = foundWords.length;
   const progressPercent = totalPossible > 0 ? Math.round((foundCount / totalPossible) * 100) : 0;
 
-  // Sorted found words (Length, Top Pts, A - Z)
-  const displayedWords = [...foundWords].sort((a, b) => {
-    if (sortMode === 'score') {
-      return b.points - a.points || b.word.length - a.word.length || a.word.localeCompare(b.word);
-    }
-    if (sortMode === 'alpha') {
-      return a.word.localeCompare(b.word);
-    }
-    return b.word.length - a.word.length || b.points - a.points || a.word.localeCompare(b.word);
-  });
+  // Words feed in order discovered
+  const displayedWords = foundWords;
 
   // Set of found word strings
   const foundWordsSet = new Set(foundWords.map(w => w.word));
@@ -162,46 +153,6 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
           )}
         </AnimatePresence>
 
-        {/* Controls: Sort Options */}
-        <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-black/5 dark:border-white/5">
-          {/* Segmented Sort Controls */}
-          <div className="flex items-center p-0.5 bg-black/5 dark:bg-white/10 rounded-lg text-xs font-medium">
-            <button
-              onClick={() => setSortMode('length')}
-              className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-                sortMode === 'length'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Length
-            </button>
-            <button
-              onClick={() => setSortMode('score')}
-              className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-                sortMode === 'score'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Top Pts
-            </button>
-            <button
-              onClick={() => setSortMode('alpha')}
-              className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-                sortMode === 'alpha'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              A - Z
-            </button>
-          </div>
-
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono-nums">
-            {foundWords.length} {foundWords.length === 1 ? 'word' : 'words'}
-          </span>
-        </div>
       </div>
 
       {/* Words List Container */}
