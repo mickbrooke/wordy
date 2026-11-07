@@ -39,6 +39,8 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
   const [showAllSolvable, setShowAllSolvable] = useState<boolean>(false);
   const [showScoringGuide, setShowScoringGuide] = useState<boolean>(false);
 
+  const [lengthFilter, setLengthFilter] = useState<'all' | 'long'>('all');
+
   // Standalone word validator tester
   const [testWordInput, setTestWordInput] = useState<string>('');
   const [testResult, setTestResult] = useState<{
@@ -47,9 +49,22 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
     definition?: string;
   } | null>(null);
 
+  const totalPossible = solvableWords.length;
+  const foundCount = foundWords.length;
+  const progressPercent = totalPossible > 0 ? Math.round((foundCount / totalPossible) * 100) : 0;
+
+  // 5-8 letter long words metrics
+  const totalLongSolvable = solvableWords.filter(w => w.word.length >= 5 && w.word.length <= 8).length;
+  const foundLongCount = foundWords.filter(w => w.word.length >= 5 && w.word.length <= 8).length;
+
   // Filtered and sorted found words
   const displayedWords = [...foundWords]
-    .filter(item => item.word.toLowerCase().includes(searchTerm.toLowerCase().trim()))
+    .filter(item => {
+      if (lengthFilter === 'long' && (item.word.length < 5 || item.word.length > 8)) {
+        return false;
+      }
+      return item.word.toLowerCase().includes(searchTerm.toLowerCase().trim());
+    })
     .sort((a, b) => {
       if (sortMode === 'recent') {
         return b.timestamp - a.timestamp;
@@ -62,10 +77,6 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
       }
       return a.word.localeCompare(b.word);
     });
-
-  const totalPossible = solvableWords.length;
-  const foundCount = foundWords.length;
-  const progressPercent = totalPossible > 0 ? Math.round((foundCount / totalPossible) * 100) : 0;
 
   // Set of found word strings
   const foundWordsSet = new Set(foundWords.map(w => w.word));
@@ -129,6 +140,28 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
               className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-300"
               style={{ width: `${Math.min(100, progressPercent)}%` }}
             />
+          </div>
+
+          {/* 5-8 Letters Quick Pill & Tracker */}
+          <div className="flex items-center justify-between pt-1">
+            <button
+              onClick={() => setLengthFilter(prev => prev === 'long' ? 'all' : 'long')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${
+                lengthFilter === 'long'
+                  ? 'bg-amber-500 text-white shadow-xs'
+                  : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 hover:bg-amber-500/25'
+              }`}
+              title="Click to toggle filter for 5-8 letter words"
+            >
+              <Sparkles className="w-3 h-3 text-amber-400" />
+              <span>5-8 Letter Words: {foundLongCount}/{totalLongSolvable}</span>
+              {lengthFilter === 'long' && (
+                <span className="text-[9px] uppercase tracking-wider ml-0.5 bg-black/20 text-white px-1 rounded">Filtered</span>
+              )}
+            </button>
+            <span className="text-[10px] text-slate-400">
+              {lengthFilter === 'long' ? 'Showing 5-8L only' : 'All lengths'}
+            </span>
           </div>
         </div>
 
@@ -343,41 +376,50 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
         )}
 
         {/* Revealed Solvable Words (Surrender/Inspector mode) */}
-        {showAllSolvable && (
-          <div className="mt-4 pt-4 border-t border-dashed border-black/15 dark:border-white/15">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                All Solvable Words on this Board ({solvableWords.length})
-              </h4>
-              <span className="text-[10px] text-slate-400">Validated by English dictionary</span>
+        {showAllSolvable && (() => {
+          const displayedSolvables = solvableWords.filter(w => {
+            if (lengthFilter === 'long' && (w.word.length < 5 || w.word.length > 8)) {
+              return false;
+            }
+            return w.word.toLowerCase().includes(searchTerm.toLowerCase().trim());
+          });
+
+          return (
+            <div className="mt-4 pt-4 border-t border-dashed border-black/15 dark:border-white/15">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Solvable Words ({displayedSolvables.length}{lengthFilter === 'long' ? ' of 5-8 letters' : ''})
+                </h4>
+                <span className="text-[10px] text-slate-400">Validated by English dictionary</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                {displayedSolvables.map((solvable) => {
+                  const isFound = foundWordsSet.has(solvable.word);
+                  return (
+                    <button
+                      key={solvable.word}
+                      onClick={() => {
+                        if (solvable.paths.length > 0) {
+                          onSelectWordForReplay(solvable.paths[0]);
+                        }
+                      }}
+                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium border text-left transition-colors cursor-pointer ${
+                        isFound
+                          ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
+                          : 'bg-black/5 dark:bg-white/5 border-transparent text-slate-600 dark:text-slate-400 hover:border-black/10'
+                      }`}
+                    >
+                      <span className="font-bold tracking-wide">{solvable.word}</span>
+                      <span className="text-[10px] font-mono-nums opacity-60">
+                        {isFound ? '✓' : `${solvable.estimatedPoints || 100}p`}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-              {solvableWords.map((solvable) => {
-                const isFound = foundWordsSet.has(solvable.word);
-                return (
-                  <button
-                    key={solvable.word}
-                    onClick={() => {
-                      if (solvable.paths.length > 0) {
-                        onSelectWordForReplay(solvable.paths[0]);
-                      }
-                    }}
-                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium border text-left transition-colors cursor-pointer ${
-                      isFound
-                        ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
-                        : 'bg-black/5 dark:bg-white/5 border-transparent text-slate-600 dark:text-slate-400 hover:border-black/10'
-                    }`}
-                  >
-                    <span className="font-bold tracking-wide">{solvable.word}</span>
-                    <span className="text-[10px] font-mono-nums opacity-60">
-                      {isFound ? '✓' : `${solvable.estimatedPoints || 100}p`}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Dictionary Word Validation Tester Section */}

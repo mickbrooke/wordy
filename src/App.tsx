@@ -52,7 +52,11 @@ export default function App() {
 
   // Inspector & Interactive highlights
   const [highlightedPath, setHighlightedPath] = useState<number[] | null>(null);
-  const [hintTileIndex, setHintTileIndex] = useState<number[] | null>(null);
+  const [hintInfo, setHintInfo] = useState<{
+    tileIndex: number;
+    wordLength: number;
+    startLetter: string;
+  } | null>(null);
   const [activeWordDetail, setActiveWordDetail] = useState<{
     word: string;
     definition?: string;
@@ -102,7 +106,7 @@ export default function App() {
     setStreak(0);
     setLastWordTime(0);
     setHighlightedPath(null);
-    setHintTileIndex(null);
+    setHintInfo(null);
     setIsTimedGameOver(false);
 
     if (mode === 'timed') {
@@ -202,7 +206,7 @@ export default function App() {
     [foundWords, lastWordTime, streak, board.solvableWords.length, mode, isTimerRunning, timeRemaining, isTimedGameOver]
   );
 
-  // Request a hint for an undiscovered word
+  // Request a hint for an undiscovered word (prioritizes 5, 6, 7, and 8-letter words)
   const handleRequestHint = useCallback(() => {
     const foundSet = new Set(foundWords.map(w => w.word));
     const undiscovered = board.solvableWords.filter(w => !foundSet.has(w.word));
@@ -211,20 +215,30 @@ export default function App() {
       return;
     }
 
-    // Pick a random undiscovered word
-    const targetWord = undiscovered[Math.floor(Math.random() * undiscovered.length)];
+    // Prioritize 5, 6, 7, and 8-letter words so players uncover rich longer words
+    const longUndiscovered = undiscovered.filter(w => w.word.length >= 5 && w.word.length <= 8);
+    const targetCandidates = longUndiscovered.length > 0 ? longUndiscovered : undiscovered;
+    const targetWord = targetCandidates[Math.floor(Math.random() * targetCandidates.length)];
+
     if (targetWord.paths.length > 0) {
       const targetPath = targetWord.paths[0];
-      // Highlight the first tile of that word
-      setHintTileIndex([targetPath[0]]);
+      const startTile = targetPath[0];
+      const startLetter = board.tiles[startTile]?.letter || targetWord.word[0];
+
+      // Highlight the first tile of that word and set target length details
+      setHintInfo({
+        tileIndex: startTile,
+        wordLength: targetWord.word.length,
+        startLetter
+      });
       soundEffects.playSwipeStep(0);
 
-      // Auto clear hint indicator after 3.5s
+      // Auto clear hint indicator after 4.5s
       setTimeout(() => {
-        setHintTileIndex(null);
-      }, 3500);
+        setHintInfo(null);
+      }, 4500);
     }
-  }, [foundWords, board.solvableWords]);
+  }, [foundWords, board.solvableWords, board.tiles]);
 
   // Toggle audio
   const handleToggleSound = () => {
@@ -337,7 +351,8 @@ export default function App() {
               highlightedPath={highlightedPath}
               onClearHighlight={() => setHighlightedPath(null)}
               onRequestHint={handleRequestHint}
-              hintTileIndex={hintTileIndex ? hintTileIndex[0] : null}
+              hintTileIndex={hintInfo?.tileIndex ?? null}
+              hintMessage={hintInfo ? `Look for a ${hintInfo.wordLength}-letter word starting with "${hintInfo.startLetter}"` : null}
               onShuffleBoard={startNewGame}
             />
           </div>

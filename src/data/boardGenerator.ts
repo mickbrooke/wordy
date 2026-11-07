@@ -1,60 +1,5 @@
 import { BoardTile, SolvableWord } from '../types.ts';
 import { VALID_WORDS_SET, hasWordWithPrefix, getWordDefinition } from './dictionary.ts';
-
-// Standard 16 Boggle-style dice for balanced, high-yield English letter grids
-const BOGGLE_DICE: string[][] = [
-  ['A', 'A', 'E', 'E', 'G', 'N'],
-  ['A', 'B', 'B', 'J', 'O', 'O'],
-  ['A', 'C', 'H', 'O', 'P', 'S'],
-  ['A', 'F', 'F', 'K', 'P', 'S'],
-  ['A', 'O', 'O', 'T', 'T', 'W'],
-  ['C', 'I', 'M', 'O', 'T', 'U'],
-  ['D', 'E', 'I', 'L', 'R', 'X'],
-  ['D', 'E', 'L', 'R', 'V', 'Y'],
-  ['D', 'I', 'S', 'T', 'T', 'Y'],
-  ['E', 'E', 'G', 'H', 'N', 'W'],
-  ['E', 'E', 'I', 'N', 'S', 'U'],
-  ['E', 'H', 'R', 'T', 'V', 'W'],
-  ['E', 'I', 'O', 'S', 'S', 'T'],
-  ['E', 'L', 'R', 'T', 'T', 'Y'],
-  ['H', 'I', 'M', 'N', 'U', 'K'],
-  ['H', 'L', 'N', 'N', 'R', 'Z'],
-];
-
-// Curated high-scoring seeds with lots of fun 4-letter words
-const CURATED_BOARDS: string[][] = [
-  [
-    'S', 'T', 'A', 'R',
-    'P', 'O', 'E', 'T',
-    'L', 'I', 'N', 'E',
-    'D', 'E', 'A', 'R'
-  ],
-  [
-    'C', 'A', 'R', 'D',
-    'O', 'P', 'E', 'N',
-    'O', 'S', 'T', 'E',
-    'L', 'I', 'F', 'E'
-  ],
-  [
-    'W', 'I', 'S', 'H',
-    'O', 'R', 'D', 'E',
-    'R', 'O', 'A', 'D',
-    'K', 'I', 'N', 'G'
-  ],
-  [
-    'B', 'O', 'A', 'T',
-    'L', 'O', 'V', 'E',
-    'U', 'C', 'K', 'S',
-    'E', 'A', 'S', 'Y'
-  ],
-  [
-    'F', 'I', 'R', 'E',
-    'L', 'A', 'M', 'P',
-    'O', 'N', 'E', 'S',
-    'W', 'A', 'L', 'K'
-  ]
-];
-
 import { calculateWordScore } from '../utils/scoring.ts';
 
 // Orthogonal-only directions (Up, Down, Left, Right) — strictly no diagonals allowed
@@ -66,7 +11,7 @@ const ORTHOGONAL_DIRECTIONS: [number, number][] = [
 ];
 
 // Precompute adjacency map for a 4x4 grid (16 tiles) - strictly orthogonal (horizontal & vertical)
-const ADJACENCY_MAP: number[][] = Array.from({ length: 16 }, (_, index) => {
+export const ADJACENCY_MAP: number[][] = Array.from({ length: 16 }, (_, index) => {
   const row = Math.floor(index / 4);
   const col = index % 4;
   const neighbors: number[] = [];
@@ -99,6 +44,87 @@ export function areNeighbors(
   }
   const neighbors = ADJACENCY_MAP[index1];
   return Boolean(neighbors && neighbors.includes(index2));
+}
+
+// Curated pool of high-yield 6, 7, and 8-letter anchor words embedded along orthogonal walks
+const ANCHORS_POOL: string[] = [
+  'SPRING', 'STREAM', 'PLANET', 'FLOWER', 'STRONG', 'SILVER', 'CASTLE', 'SUMMER',
+  'GOLDEN', 'STREET', 'TRAINS', 'BREADS', 'HEARTS', 'WATERS', 'BEAUTY', 'TRAVEL',
+  'WONDER', 'NATURE', 'ISLAND', 'FOREST', 'PRINCE', 'CLOUDS', 'WINTER', 'AUTUMN',
+  'MARKET', 'VALLEY', 'DESERT', 'BRIDGE', 'SHADOW', 'SPIRIT', 'WINDOW', 'POCKET',
+  'POINTS', 'GARDEN', 'PLATES', 'STANDS', 'STARES', 'PLANTS', 'SPARKS', 'FRIEND',
+  'PRINTS', 'STORIES', 'JOURNEY', 'RAINBOW', 'WEATHER', 'COUNTRY', 'VILLAGE',
+  'STATION', 'MORNING', 'BLANKET', 'LANTERN', 'WALKING', 'SMILING', 'TALKING',
+  'POSTERS', 'MASTERS', 'FARMERS', 'WORKERS', 'HELPERS', 'LEADERS', 'READERS',
+  'WRITERS', 'DANCERS', 'FLOWERS', 'GARDENS', 'PLANETS', 'CASTLES', 'BRIDGES',
+  'TRAINER', 'PRINTER', 'PAINTER', 'BUILDER', 'HUNTERS', 'SINGERS', 'SHINING'
+];
+
+// High-frequency synergy letters for remaining board tiles to maximize 5-8 letter word branches
+const COMMON_FILLERS: string[] = ['E', 'A', 'I', 'O', 'S', 'T', 'R', 'N', 'D', 'L', 'M', 'P', 'C'];
+
+// Curated high-scoring boards packed with 25-45 words of length 5, 6, 7, and 8
+export const CURATED_BOARDS: string[][] = [
+  [
+    'S', 'O', 'T', 'S',
+    'E', 'R', 'A', 'S',
+    'S', 'A', 'L', 'L',
+    'O', 'V', 'Y', 'E'
+  ],
+  [
+    'S', 'P', 'R', 'I',
+    'T', 'R', 'E', 'N',
+    'A', 'M', 'S', 'G',
+    'R', 'T', 'S', 'O'
+  ],
+  [
+    'P', 'L', 'A', 'N',
+    'O', 'S', 'E', 'T',
+    'W', 'E', 'R', 'S',
+    'D', 'I', 'N', 'G'
+  ],
+  [
+    'F', 'L', 'O', 'W',
+    'S', 'T', 'E', 'R',
+    'C', 'A', 'R', 'S',
+    'P', 'I', 'N', 'E'
+  ],
+  [
+    'S', 'I', 'L', 'V',
+    'P', 'A', 'E', 'R',
+    'T', 'R', 'S', 'T',
+    'O', 'N', 'E', 'S'
+  ]
+];
+
+/**
+ * Finds a self-avoiding orthogonal path of the given length on the 4x4 grid
+ */
+function findOrthogonalWalk(length: number, occupied: Set<number>): number[] | null {
+  const availableStarts = Array.from({ length: 16 }, (_, i) => i).filter(i => !occupied.has(i));
+  if (availableStarts.length === 0) return null;
+  const starts = availableStarts.sort(() => Math.random() - 0.5);
+
+  for (const start of starts) {
+    const path: number[] = [start];
+    const visited = new Set<number>([start, ...occupied]);
+
+    function step(curr: number): boolean {
+      if (path.length === length) return true;
+      const neighbors = [...ADJACENCY_MAP[curr]].filter(n => !visited.has(n)).sort(() => Math.random() - 0.5);
+      for (const next of neighbors) {
+        visited.add(next);
+        path.push(next);
+        if (step(next)) return true;
+        path.pop();
+        visited.delete(next);
+      }
+      return false;
+    }
+
+    if (step(start)) return path;
+  }
+  return null;
 }
 
 /**
@@ -159,8 +185,55 @@ export function findAllSolvableWords(letters: string[]): SolvableWord[] {
 }
 
 /**
+ * Generates a single candidate board by embedding orthogonal anchor words of 6-8 letters
+ */
+function generateAnchorCandidate(): { letters: string[]; solvableWords: SolvableWord[]; longCount: number } {
+  const grid: (string | null)[] = Array(16).fill(null);
+  const occupied = new Set<number>();
+
+  // Embed primary anchor word (6-8 characters)
+  const anchor1 = ANCHORS_POOL[Math.floor(Math.random() * ANCHORS_POOL.length)];
+  const walk1 = findOrthogonalWalk(anchor1.length, occupied);
+  if (walk1) {
+    for (let i = 0; i < anchor1.length; i++) {
+      grid[walk1[i]] = anchor1[i];
+      occupied.add(walk1[i]);
+    }
+  }
+
+  // Embed secondary anchor word (5-7 characters) in available spaces
+  const remaining = 16 - occupied.size;
+  if (remaining >= 5) {
+    const suitable = ANCHORS_POOL.filter(w => w.length <= remaining);
+    if (suitable.length > 0) {
+      const anchor2 = suitable[Math.floor(Math.random() * suitable.length)];
+      const walk2 = findOrthogonalWalk(anchor2.length, occupied);
+      if (walk2) {
+        for (let i = 0; i < anchor2.length; i++) {
+          grid[walk2[i]] = anchor2[i];
+          occupied.add(walk2[i]);
+        }
+      }
+    }
+  }
+
+  // Fill remaining open tiles with high-synergy vowels and consonants
+  for (let i = 0; i < 16; i++) {
+    if (!grid[i]) {
+      grid[i] = COMMON_FILLERS[Math.floor(Math.random() * COMMON_FILLERS.length)];
+    }
+  }
+
+  const letters = grid as string[];
+  const solvableWords = findAllSolvableWords(letters);
+  const longCount = solvableWords.filter(w => w.word.length >= 5 && w.word.length <= 8).length;
+
+  return { letters, solvableWords, longCount };
+}
+
+/**
  * Generate a new random or curated 4x4 board
- * Guarantees at least 15 solvable 4-letter words
+ * Guarantees a rich distribution of 5, 6, 7, and 8-letter words (typically 20 to 45 long words!)
  */
 export function generateBoard(curatedIndex?: number): {
   tiles: BoardTile[];
@@ -169,30 +242,28 @@ export function generateBoard(curatedIndex?: number): {
 } {
   let letters: string[] = [];
   let solvableWords: SolvableWord[] = [];
-  let attempts = 0;
 
   if (curatedIndex !== undefined && CURATED_BOARDS[curatedIndex]) {
     letters = [...CURATED_BOARDS[curatedIndex]];
     solvableWords = findAllSolvableWords(letters);
   } else {
-    // Generate board using dice shuffle and check word density
-    while (attempts < 80) {
-      attempts++;
-      // Shuffle dice order
-      const diceCopy = [...BOGGLE_DICE].sort(() => Math.random() - 0.5);
-      // Pick random face from each die
-      letters = diceCopy.map(die => die[Math.floor(Math.random() * die.length)]);
-
-      solvableWords = findAllSolvableWords(letters);
-
-      // Target rich boards with at least 8 orthogonal words
-      if (solvableWords.length >= 8) {
+    // Generate anchor-walk boards and select candidate with high density of 5-8 letter words
+    let best = generateAnchorCandidate();
+    for (let attempt = 0; attempt < 12; attempt++) {
+      if (best.longCount >= 18) {
         break;
+      }
+      const candidate = generateAnchorCandidate();
+      if (candidate.longCount > best.longCount) {
+        best = candidate;
       }
     }
 
-    // Fallback if random attempts were low
-    if (solvableWords.length < 8) {
+    letters = best.letters;
+    solvableWords = best.solvableWords;
+
+    // Safety fallback to curated high-yield board if needed
+    if (solvableWords.length < 10) {
       const fallback = CURATED_BOARDS[Math.floor(Math.random() * CURATED_BOARDS.length)];
       letters = [...fallback];
       solvableWords = findAllSolvableWords(letters);

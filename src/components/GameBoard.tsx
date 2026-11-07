@@ -13,6 +13,7 @@ interface GameBoardProps {
   onClearHighlight: () => void;
   onRequestHint: () => void;
   hintTileIndex: number | null;
+  hintMessage?: string | null;
   onShuffleBoard: () => void;
 }
 
@@ -34,7 +35,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   highlightedPath,
   onClearHighlight,
   onRequestHint,
-  hintTileIndex
+  hintTileIndex,
+  hintMessage
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -323,6 +325,26 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
   return (
     <div className="flex flex-col items-center w-full max-w-md mx-auto select-none">
+      {/* Dynamic Hint Announcement Banner */}
+      <AnimatePresence>
+        {hintMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            className="w-full mb-3 px-3.5 py-2 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-800 dark:text-amber-200 text-xs font-semibold flex items-center justify-between shadow-xs"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 animate-pulse" />
+              <span className="truncate">{hintMessage}</span>
+            </div>
+            <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider shrink-0 ml-2 bg-amber-500/20 px-1.5 py-0.5 rounded">
+              Long Word
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Word Composition Ribbon & Live Scoring */}
       <div className="w-full mb-3.5">
         <motion.div
@@ -537,6 +559,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     title={`Rarity bonus: +${rarity} pts`}
                   >
                     +{rarity}
+                  </span>
+                )}
+
+                {/* Hint START indicator tag on top left */}
+                {isHint && !isSelected && (
+                  <span className="absolute top-1 left-1 sm:top-1.5 sm:left-1.5 bg-amber-500 text-white text-[8px] font-black px-1 py-0.5 rounded shadow-xs flex items-center gap-0.5 animate-bounce">
+                    <Lightbulb className="w-2.5 h-2.5" />
+                    START
                   </span>
                 )}
 
