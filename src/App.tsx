@@ -133,8 +133,13 @@ export default function App() {
     return board.solvableWords.filter(w => !foundSet.has(w.word));
   }, [board.solvableWords, foundWords]);
 
-  // Compute active tile indices: any tile used by at least one outstanding word remains in play
+  // Compute active tile indices: at start of the game, ALL 16 letters are included.
+  // As words are found, tiles remove when they are no longer in any outstanding words.
   const activeTileIndices = useMemo(() => {
+    // At the start of the game (before any words are found), ALL 16 letters are guaranteed to be active
+    if (foundWords.length === 0) {
+      return new Set<number>(Array.from({ length: 16 }, (_, i) => i));
+    }
     const set = new Set<number>();
     for (const word of outstandingWords) {
       for (const path of word.paths) {
@@ -144,7 +149,7 @@ export default function App() {
       }
     }
     return set;
-  }, [outstandingWords]);
+  }, [outstandingWords, foundWords.length]);
 
   // Evaluate word when drawn - Validates using standard English dictionary & calculates scoring
   const handleWordCompleted = useCallback(

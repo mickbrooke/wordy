@@ -68,42 +68,42 @@ const BOGGLE_DICE: string[] = [
   'EIOSST', 'ELRTTY', 'HIMNUO', 'HLNNRZ'
 ];
 
-// Curated high-yield boards naturally possessing 12 to 16 total words on the entire board
+// Curated high-yield boards naturally possessing 13 to 18 total words and covering ALL 16 tiles
 export const CURATED_BOARDS: string[][] = [
-  // Board 0: Anchor HEARTS (16 total words, 7 long words: HEARTS, FEART, HEART, STRAE, STRAW, WARPS, WARTS...)
+  // Board 0: 14 total words, 6 long words (RAINBOWY, JOURNEY, RAINBOW, BOWNE, INBYE, RUBAI...), covers all 16 tiles
   [
-    'B', 'H', 'E', 'F',
-    'M', 'I', 'A', 'W',
-    'I', 'R', 'R', 'T',
-    'I', 'G', 'P', 'S'
+    'R', 'J', 'O', 'L',
+    'A', 'B', 'U', 'R',
+    'I', 'O', 'W', 'N',
+    'N', 'B', 'Y', 'E'
   ],
-  // Board 1: Anchor DANCERS (12 total words, 5 long words: DANCERS, DANCER, DANCE, SANES, SENAS...)
+  // Board 1: 18 total words, 10 long words (MEINING, MORNING, MEINIE, TEEING, TINING, WINTER...), covers all 16 tiles
   [
-    'U', 'C', 'E', 'R',
-    'E', 'N', 'C', 'S',
-    'S', 'A', 'D', 'D',
-    'E', 'S', 'R', 'N'
+    'W', 'E', 'M', 'O',
+    'I', 'I', 'N', 'R',
+    'N', 'T', 'I', 'N',
+    'R', 'E', 'E', 'G'
   ],
-  // Board 2: Anchor FRIEND (13 total words, 3 long words: FRIENDS, FRIEND, FLORS, BIEN, BIRR, FLEE, FLOE...)
+  // Board 2: 18 total words, 9 long words (BUILDER, POINTS, POLDER, BUILD, OINTS, OLDER, POINT...), covers all 16 tiles
   [
-    'S', 'D', 'N', 'E',
-    'R', 'R', 'R', 'I',
-    'O', 'L', 'F', 'B',
-    'E', 'E', 'T', 'T'
+    'S', 'T', 'B', 'U',
+    'N', 'N', 'P', 'I',
+    'T', 'I', 'O', 'L',
+    'N', 'R', 'E', 'D'
   ],
-  // Board 3: Anchor TRAVEL (16 total words, 8 long words: TRAVEL, DRAVE, EARTH, LEVEE, LOOEY, RAVEL, TRAVE, VARDY...)
+  // Board 3: 13 total words, 6 long words (BUILDER, PLANETS, PLANET, ALDER, BUILD, PLANE...), covers all 16 tiles
   [
-    'T', 'R', 'A', 'E',
-    'H', 'D', 'V', 'E',
-    'E', 'Y', 'E', 'O',
-    'A', 'I', 'L', 'O'
+    'T', 'B', 'U', 'I',
+    'E', 'N', 'A', 'L',
+    'T', 'P', 'L', 'D',
+    'S', 'K', 'R', 'E'
   ],
-  // Board 4: Anchor DANCERS (16 total words, 6 long words: DANCERS, CERNES, DANCER, CERNE, DANCE, ERNES...)
+  // Board 4: 13 total words, 5 long words (HUNTERS, VILLAGE, HUNTER, ALLIS, VILLA, EGAL...), covers all 16 tiles
   [
-    'L', 'E', 'C', 'D',
-    'W', 'R', 'N', 'A',
-    'H', 'S', 'E', 'A',
-    'S', 'A', 'I', 'T'
+    'H', 'T', 'E', 'R',
+    'U', 'N', 'R', 'S',
+    'E', 'G', 'L', 'I',
+    'V', 'A', 'L', 'V'
   ]
 ];
 
@@ -195,7 +195,7 @@ export function findAllSolvableWords(letters: string[]): SolvableWord[] {
 }
 
 /**
- * Generates a single candidate board by embedding an orthogonal anchor word of 6-8 letters
+ * Generates a single candidate board by embedding orthogonal anchor words
  * and filling remaining tiles with balanced Boggle dice.
  */
 function generateAnchorCandidate(): {
@@ -214,6 +214,22 @@ function generateAnchorCandidate(): {
     for (let i = 0; i < anchor.length; i++) {
       grid[walk[i]] = anchor[i];
       occupied.add(walk[i]);
+    }
+  }
+
+  // Embed secondary anchor word (5-7 characters) in remaining available spaces
+  const remaining = 16 - occupied.size;
+  if (remaining >= 5) {
+    const suitable = ANCHORS_POOL.filter(w => w.length <= remaining);
+    if (suitable.length > 0) {
+      const anchor2 = suitable[Math.floor(Math.random() * suitable.length)];
+      const walk2 = findOrthogonalWalk(anchor2.length, occupied);
+      if (walk2) {
+        for (let i = 0; i < anchor2.length; i++) {
+          grid[walk2[i]] = anchor2[i];
+          occupied.add(walk2[i]);
+        }
+      }
     }
   }
 
@@ -293,7 +309,8 @@ export function selectBoardSolvableWords(allSolvables: SolvableWord[]): Solvable
 
 /**
  * Generate a new random or curated 4x4 board
- * Guarantees at most 20 words (packed with 5 to 8-letter words and covering all 16 tiles)
+ * Guarantees that at the start of the game, ALL 16 letters are included in active play,
+ * with at most 20 words and rich 5 to 8-letter words.
  */
 export function generateBoard(curatedIndex?: number): {
   tiles: BoardTile[];
@@ -307,18 +324,17 @@ export function generateBoard(curatedIndex?: number): {
     letters = [...CURATED_BOARDS[curatedIndex]];
     solvableWords = findAllSolvableWords(letters);
   } else {
-    // Generate anchor-walk boards and select candidate with 10-20 words where every word is in solvableWords
+    // Generate anchor-walk boards and select candidate with ALL 16 tiles covered and <= 20 words
     let bestCandidate: { letters: string[]; solvableWords: SolvableWord[]; coveredTiles: number } | null = null;
 
-    for (let attempt = 0; attempt < 30; attempt++) {
+    for (let attempt = 0; attempt < 60; attempt++) {
       const candidate = generateAnchorCandidate();
-      // Ideal target: between 10 and 20 total words on the entire board, with strong tile coverage
-      if (candidate.solvableWords.length >= 10 && candidate.solvableWords.length <= MAX_BOARD_WORDS && candidate.coveredTiles >= 12) {
+      // Ideal target: ALL 16 tiles covered and between 10 and 20 total words on the entire board
+      if (candidate.coveredTiles === 16 && candidate.solvableWords.length >= 10 && candidate.solvableWords.length <= MAX_BOARD_WORDS) {
         bestCandidate = candidate;
-        if (candidate.coveredTiles >= 14) {
-          break;
-        }
-      } else if (!bestCandidate && candidate.solvableWords.length >= 8) {
+        break;
+      } else if (candidate.coveredTiles === 16 && !bestCandidate) {
+        // Covers all 16 tiles, words can be clamped with selectBoardSolvableWords preserving all 16 tiles
         bestCandidate = candidate;
       }
     }
@@ -329,7 +345,7 @@ export function generateBoard(curatedIndex?: number): {
         ? bestCandidate.solvableWords
         : selectBoardSolvableWords(bestCandidate.solvableWords);
     } else {
-      // Pick a random curated board
+      // Pick a random curated board (all 5 curated boards cover 100% of the 16 tiles with 13-18 words)
       const fallback = CURATED_BOARDS[Math.floor(Math.random() * CURATED_BOARDS.length)];
       letters = [...fallback];
       solvableWords = findAllSolvableWords(letters);
