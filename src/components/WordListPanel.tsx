@@ -141,28 +141,6 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
               style={{ width: `${Math.min(100, progressPercent)}%` }}
             />
           </div>
-
-          {/* 5-8 Letters Quick Pill & Tracker */}
-          <div className="flex items-center justify-between pt-1">
-            <button
-              onClick={() => setLengthFilter(prev => prev === 'long' ? 'all' : 'long')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${
-                lengthFilter === 'long'
-                  ? 'bg-amber-500 text-white shadow-xs'
-                  : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 hover:bg-amber-500/25'
-              }`}
-              title="Click to toggle filter for 5-8 letter words"
-            >
-              <Sparkles className="w-3 h-3 text-amber-400" />
-              <span>5-8 Letter Words: {foundLongCount}/{totalLongSolvable}</span>
-              {lengthFilter === 'long' && (
-                <span className="text-[9px] uppercase tracking-wider ml-0.5 bg-black/20 text-white px-1 rounded">Filtered</span>
-              )}
-            </button>
-            <span className="text-[10px] text-slate-400">
-              {lengthFilter === 'long' ? 'Showing 5-8L only' : 'All lengths'}
-            </span>
-          </div>
         </div>
 
         {/* Scoring Guide Dropdown */}
@@ -466,27 +444,46 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
         )}
       </div>
 
-      {/* Footer: Reveal/Hide Solution Mode */}
-      <div className="p-3 border-t border-black/10 dark:border-white/10 bg-slate-50/50 dark:bg-slate-850/50 flex items-center justify-between text-xs">
+      {/* Footer: Long Words Tracker & Reveal/Hide Solution Mode */}
+      <div className="p-3 border-t border-black/10 dark:border-white/10 bg-slate-50/50 dark:bg-slate-850/50 flex items-center justify-between gap-2 text-xs flex-wrap">
         <span className="text-slate-500 dark:text-slate-400 text-[11px]">
           {foundCount} of {totalPossible} collected
         </span>
-        <button
-          onClick={() => setShowAllSolvable(prev => !prev)}
-          className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors cursor-pointer"
-        >
-          {showAllSolvable ? (
-            <>
-              <EyeOff className="w-3.5 h-3.5" />
-              <span>Hide Full List</span>
-            </>
-          ) : (
-            <>
-              <Eye className="w-3.5 h-3.5" />
-              <span>Reveal All {totalPossible} Words</span>
-            </>
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Long Words Tracker Button */}
+          <button
+            onClick={() => setLengthFilter(prev => prev === 'long' ? 'all' : 'long')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              lengthFilter === 'long'
+                ? 'bg-amber-500 text-white shadow-xs ring-1 ring-amber-400'
+                : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 hover:bg-amber-500/25 border border-amber-500/20'
+            }`}
+            title="Click to toggle filter for 5-8 letter words"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+            <span>5-8L: {foundLongCount}/{totalLongSolvable}</span>
+            {lengthFilter === 'long' && (
+              <span className="text-[9px] uppercase tracking-wider ml-0.5 bg-black/20 text-white px-1 rounded">Filtered</span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setShowAllSolvable(prev => !prev)}
+            className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors cursor-pointer px-2 py-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
+          >
+            {showAllSolvable ? (
+              <>
+                <EyeOff className="w-3.5 h-3.5" />
+                <span>Hide Full List</span>
+              </>
+            ) : (
+              <>
+                <Eye className="w-3.5 h-3.5" />
+                <span>Reveal All {totalPossible} Words</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
