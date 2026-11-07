@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
-  Search,
   BookOpen,
   Sparkles,
   Award,
@@ -34,12 +33,9 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
   activeReplayPath,
   score
 }) => {
-  const [sortMode, setSortMode] = useState<'recent' | 'length' | 'score' | 'alpha'>('recent');
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [sortMode, setSortMode] = useState<'length' | 'score' | 'alpha'>('length');
   const [showAllSolvable, setShowAllSolvable] = useState<boolean>(false);
   const [showScoringGuide, setShowScoringGuide] = useState<boolean>(false);
-
-  const [lengthFilter, setLengthFilter] = useState<'all' | 'long'>('all');
 
   // Standalone word validator tester
   const [testWordInput, setTestWordInput] = useState<string>('');
@@ -53,30 +49,16 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
   const foundCount = foundWords.length;
   const progressPercent = totalPossible > 0 ? Math.round((foundCount / totalPossible) * 100) : 0;
 
-  // 5-8 letter long words metrics
-  const totalLongSolvable = solvableWords.filter(w => w.word.length >= 5 && w.word.length <= 8).length;
-  const foundLongCount = foundWords.filter(w => w.word.length >= 5 && w.word.length <= 8).length;
-
-  // Filtered and sorted found words
-  const displayedWords = [...foundWords]
-    .filter(item => {
-      if (lengthFilter === 'long' && (item.word.length < 5 || item.word.length > 8)) {
-        return false;
-      }
-      return item.word.toLowerCase().includes(searchTerm.toLowerCase().trim());
-    })
-    .sort((a, b) => {
-      if (sortMode === 'recent') {
-        return b.timestamp - a.timestamp;
-      }
-      if (sortMode === 'length') {
-        return b.word.length - a.word.length || b.points - a.points || a.word.localeCompare(b.word);
-      }
-      if (sortMode === 'score') {
-        return b.points - a.points;
-      }
+  // Sorted found words (Length, Top Pts, A - Z)
+  const displayedWords = [...foundWords].sort((a, b) => {
+    if (sortMode === 'score') {
+      return b.points - a.points || b.word.length - a.word.length || a.word.localeCompare(b.word);
+    }
+    if (sortMode === 'alpha') {
       return a.word.localeCompare(b.word);
-    });
+    }
+    return b.word.length - a.word.length || b.points - a.points || a.word.localeCompare(b.word);
+  });
 
   // Set of found word strings
   const foundWordsSet = new Set(foundWords.map(w => w.word));
@@ -180,63 +162,45 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
           )}
         </AnimatePresence>
 
-        {/* Controls: Sort and Search */}
+        {/* Controls: Sort Options */}
         <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-black/5 dark:border-white/5">
           {/* Segmented Sort Controls */}
-          <div className="flex items-center p-0.5 bg-black/5 dark:bg-white/10 rounded-lg text-xs font-medium overflow-x-auto scrollbar-none">
-            <button
-              onClick={() => setSortMode('recent')}
-              className={`px-2 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-                sortMode === 'recent'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-              }`}
-            >
-              Recent
-            </button>
+          <div className="flex items-center p-0.5 bg-black/5 dark:bg-white/10 rounded-lg text-xs font-medium">
             <button
               onClick={() => setSortMode('length')}
-              className={`px-2 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
                 sortMode === 'length'
                   ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Length
             </button>
             <button
               onClick={() => setSortMode('score')}
-              className={`px-2 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
                 sortMode === 'score'
                   ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Top Pts
             </button>
             <button
               onClick={() => setSortMode('alpha')}
-              className={`px-2 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
                 sortMode === 'alpha'
                   ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               A - Z
             </button>
           </div>
 
-          {/* Quick search input */}
-          <div className="relative flex-1 max-w-[130px] sm:max-w-[150px]">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Filter..."
-              className="w-full pl-7 pr-2.5 py-1 text-xs rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-500"
-            />
-          </div>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono-nums">
+            {foundWords.length} {foundWords.length === 1 ? 'word' : 'words'}
+          </span>
         </div>
       </div>
 
@@ -251,10 +215,6 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
             <p className="text-xs text-slate-400 max-w-xs mt-1">
               Swipe or tap 4 to 16 adjacent letters (horizontal & vertical) to create valid words. Longer words earn huge exponential bonus points!
             </p>
-          </div>
-        ) : displayedWords.length === 0 ? (
-          <div className="text-center py-8 text-xs text-slate-400">
-            No words match &quot;{searchTerm}&quot;
           </div>
         ) : (
           <AnimatePresence initial={false}>
@@ -354,50 +314,41 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
         )}
 
         {/* Revealed Solvable Words (Surrender/Inspector mode) */}
-        {showAllSolvable && (() => {
-          const displayedSolvables = solvableWords.filter(w => {
-            if (lengthFilter === 'long' && (w.word.length < 5 || w.word.length > 8)) {
-              return false;
-            }
-            return w.word.toLowerCase().includes(searchTerm.toLowerCase().trim());
-          });
-
-          return (
-            <div className="mt-4 pt-4 border-t border-dashed border-black/15 dark:border-white/15">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Solvable Words ({displayedSolvables.length}{lengthFilter === 'long' ? ' of 5-8 letters' : ''})
-                </h4>
-                <span className="text-[10px] text-slate-400">Validated by English dictionary</span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                {displayedSolvables.map((solvable) => {
-                  const isFound = foundWordsSet.has(solvable.word);
-                  return (
-                    <button
-                      key={solvable.word}
-                      onClick={() => {
-                        if (solvable.paths.length > 0) {
-                          onSelectWordForReplay(solvable.paths[0]);
-                        }
-                      }}
-                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium border text-left transition-colors cursor-pointer ${
-                        isFound
-                          ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
-                          : 'bg-black/5 dark:bg-white/5 border-transparent text-slate-600 dark:text-slate-400 hover:border-black/10'
-                      }`}
-                    >
-                      <span className="font-bold tracking-wide">{solvable.word}</span>
-                      <span className="text-[10px] font-mono-nums opacity-60">
-                        {isFound ? '✓' : `${solvable.estimatedPoints || 100}p`}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+        {showAllSolvable && (
+          <div className="mt-4 pt-4 border-t border-dashed border-black/15 dark:border-white/15">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Solvable Words ({solvableWords.length})
+              </h4>
+              <span className="text-[10px] text-slate-400">Validated by English dictionary</span>
             </div>
-          );
-        })()}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+              {solvableWords.map((solvable) => {
+                const isFound = foundWordsSet.has(solvable.word);
+                return (
+                  <button
+                    key={solvable.word}
+                    onClick={() => {
+                      if (solvable.paths.length > 0) {
+                        onSelectWordForReplay(solvable.paths[0]);
+                      }
+                    }}
+                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium border text-left transition-colors cursor-pointer ${
+                      isFound
+                        ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
+                        : 'bg-black/5 dark:bg-white/5 border-transparent text-slate-600 dark:text-slate-400 hover:border-black/10'
+                    }`}
+                  >
+                    <span className="font-bold tracking-wide">{solvable.word}</span>
+                    <span className="text-[10px] font-mono-nums opacity-60">
+                      {isFound ? '✓' : `${solvable.estimatedPoints || 100}p`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Dictionary Word Validation Tester Section */}
@@ -444,46 +395,27 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
         )}
       </div>
 
-      {/* Footer: Long Words Tracker & Reveal/Hide Solution Mode */}
-      <div className="p-3 border-t border-black/10 dark:border-white/10 bg-slate-50/50 dark:bg-slate-850/50 flex items-center justify-between gap-2 text-xs flex-wrap">
+      {/* Footer: Summary & Reveal/Hide Solution Mode */}
+      <div className="p-3 border-t border-black/10 dark:border-white/10 bg-slate-50/50 dark:bg-slate-850/50 flex items-center justify-between gap-2 text-xs">
         <span className="text-slate-500 dark:text-slate-400 text-[11px]">
           {foundCount} of {totalPossible} collected
         </span>
-        <div className="flex items-center gap-2">
-          {/* Long Words Tracker Button */}
-          <button
-            onClick={() => setLengthFilter(prev => prev === 'long' ? 'all' : 'long')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              lengthFilter === 'long'
-                ? 'bg-amber-500 text-white shadow-xs ring-1 ring-amber-400'
-                : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 hover:bg-amber-500/25 border border-amber-500/20'
-            }`}
-            title="Click to toggle filter for 5-8 letter words"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-            <span>5-8L: {foundLongCount}/{totalLongSolvable}</span>
-            {lengthFilter === 'long' && (
-              <span className="text-[9px] uppercase tracking-wider ml-0.5 bg-black/20 text-white px-1 rounded">Filtered</span>
-            )}
-          </button>
-
-          <button
-            onClick={() => setShowAllSolvable(prev => !prev)}
-            className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors cursor-pointer px-2 py-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
-          >
-            {showAllSolvable ? (
-              <>
-                <EyeOff className="w-3.5 h-3.5" />
-                <span>Hide Full List</span>
-              </>
-            ) : (
-              <>
-                <Eye className="w-3.5 h-3.5" />
-                <span>Reveal All {totalPossible} Words</span>
-              </>
-            )}
-          </button>
-        </div>
+        <button
+          onClick={() => setShowAllSolvable(prev => !prev)}
+          className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors cursor-pointer px-2.5 py-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
+        >
+          {showAllSolvable ? (
+            <>
+              <EyeOff className="w-3.5 h-3.5" />
+              <span>Hide Full List</span>
+            </>
+          ) : (
+            <>
+              <Eye className="w-3.5 h-3.5" />
+              <span>Reveal All {totalPossible} Words</span>
+            </>
+          )}
+        </button>
       </div>
     </div>
   );
