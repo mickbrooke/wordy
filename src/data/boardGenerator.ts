@@ -231,9 +231,58 @@ function generateAnchorCandidate(): { letters: string[]; solvableWords: Solvable
   return { letters, solvableWords, longCount };
 }
 
+// Board puzzle maximum words limit
+export const MAX_BOARD_WORDS = 20;
+
+/**
+ * Limit solvable words to at most 20 words, prioritizing 16-tile coverage so all tiles start
+ * in active play, while prioritizing longer 5-8 letter words and highest scoring words.
+ */
+export function selectBoardSolvableWords(allSolvables: SolvableWord[]): SolvableWord[] {
+  if (allSolvables.length <= MAX_BOARD_WORDS) {
+    return allSolvables;
+  }
+
+  const sorted = [...allSolvables].sort((a, b) => {
+    return b.word.length - a.word.length || (b.estimatedPoints || 0) - (a.estimatedPoints || 0) || a.word.localeCompare(b.word);
+  });
+
+  const selected: SolvableWord[] = [];
+  const selectedSet = new Set<string>();
+  const coveredTiles = new Set<number>();
+
+  // Pass 1: Ensure each tile 0..15 is covered by at least one selected word if possible
+  for (let tile = 0; tile < 16; tile++) {
+    if (!coveredTiles.has(tile)) {
+      const bestWordForTile = sorted.find(w => !selectedSet.has(w.word) && w.paths.some(p => p.includes(tile)));
+      if (bestWordForTile) {
+        selected.push(bestWordForTile);
+        selectedSet.add(bestWordForTile.word);
+        for (const p of bestWordForTile.paths) {
+          for (const t of p) coveredTiles.add(t);
+        }
+      }
+    }
+  }
+
+  // Pass 2: Fill remaining slots up to MAX_BOARD_WORDS (20) with longest / highest scoring words
+  for (const w of sorted) {
+    if (selected.length >= MAX_BOARD_WORDS) break;
+    if (!selectedSet.has(w.word)) {
+      selected.push(w);
+      selectedSet.add(w.word);
+      for (const p of w.paths) {
+        for (const t of p) coveredTiles.add(t);
+      }
+    }
+  }
+
+  return selected.sort((a, b) => b.word.length - a.word.length || a.word.localeCompare(b.word));
+}
+
 /**
  * Generate a new random or curated 4x4 board
- * Guarantees a rich distribution of 5, 6, 7, and 8-letter words (typically 20 to 45 long words!)
+ * Guarantees at most 20 words (packed with 5 to 8-letter words and covering all 16 tiles)
  */
 export function generateBoard(curatedIndex?: number): {
   tiles: BoardTile[];
@@ -245,28 +294,43 @@ export function generateBoard(curatedIndex?: number): {
 
   if (curatedIndex !== undefined && CURATED_BOARDS[curatedIndex]) {
     letters = [...CURATED_BOARDS[curatedIndex]];
-    solvableWords = findAllSolvableWords(letters);
+    solvableWords = selectBoardSolvableWords(findAllSolvableWords(letters));
   } else {
-    // Generate anchor-walk boards and select candidate with high density of 5-8 letter words
-    let best = generateAnchorCandidate();
-    for (let attempt = 0; attempt < 12; attempt++) {
-      if (best.longCount >= 18) {
-        break;
-      }
+    // Generate anchor-walk boards and select candidate with full 16-tile coverage and high word density
+    let bestLetters: string[] = [];
+    let bestWords: SolvableWord[] = [];
+    let bestCoveredCount = 0;
+
+    for (let attempt = 0; attempt < 16; attempt++) {
       const candidate = generateAnchorCandidate();
-      if (candidate.longCount > best.longCount) {
-        best = candidate;
+      const selected = selectBoardSolvableWords(candidate.solvableWords);
+      const covered = new Set<number>();
+      for (const w of selected) {
+        for (const p of w.paths) {
+          for (const t of p) covered.add(t);
+        }
+      }
+
+      if (covered.size > bestCoveredCount || (covered.size === bestCoveredCount && selected.length > bestWords.length)) {
+        bestCoveredCount = covered.size;
+        bestLetters = candidate.letters;
+        bestWords = selected;
+      }
+
+      // Perfect candidate: all 16 tiles covered and 20 target words
+      if (bestCoveredCount === 16 && bestWords.length === MAX_BOARD_WORDS) {
+        break;
       }
     }
 
-    letters = best.letters;
-    solvableWords = best.solvableWords;
+    letters = bestLetters;
+    solvableWords = bestWords;
 
     // Safety fallback to curated high-yield board if needed
-    if (solvableWords.length < 10) {
+    if (solvableWords.length < 8) {
       const fallback = CURATED_BOARDS[Math.floor(Math.random() * CURATED_BOARDS.length)];
       letters = [...fallback];
-      solvableWords = findAllSolvableWords(letters);
+      solvableWords = selectBoardSolvableWords(findAllSolvableWords(letters));
     }
   }
 

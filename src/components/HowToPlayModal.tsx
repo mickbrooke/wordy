@@ -102,6 +102,20 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose 
               </div>
             </div>
           </div>
+
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-850 border border-black/5 dark:border-white/5">
+            <span className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+              4
+            </span>
+            <div>
+              <p className="font-semibold text-slate-900 dark:text-white">
+                20 Target Words &amp; Tile Clearing Mechanics
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Each board features at most 20 target words. When a letter tile is no longer needed by any of the remaining outstanding words, it is removed from the board! Clear all 20 words to completely clear the board!
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">

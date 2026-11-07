@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Header } from './components/Header.tsx';
 import { GameBoard } from './components/GameBoard.tsx';
 import { WordListPanel } from './components/WordListPanel.tsx';
@@ -128,14 +128,37 @@ export default function App() {
     }
   };
 
+  // Target words and outstanding words calculation
+  const targetWordsSet = useMemo(() => {
+    return new Set(board.solvableWords.map(w => w.word));
+  }, [board.solvableWords]);
+
+  const outstandingWords = useMemo(() => {
+    const foundSet = new Set(foundWords.map(w => w.word));
+    return board.solvableWords.filter(w => !foundSet.has(w.word));
+  }, [board.solvableWords, foundWords]);
+
+  // Compute active tile indices: any tile used by at least one outstanding word remains in play
+  const activeTileIndices = useMemo(() => {
+    const set = new Set<number>();
+    for (const word of outstandingWords) {
+      for (const path of word.paths) {
+        for (const tileIndex of path) {
+          set.add(tileIndex);
+        }
+      }
+    }
+    return set;
+  }, [outstandingWords]);
+
   // Evaluate word when drawn - Validates using standard English dictionary & calculates scoring
   const handleWordCompleted = useCallback(
     (word: string, path: number[]): WordValidationResult => {
       const upper = word.toUpperCase();
       const foundWordsSet = new Set(foundWords.map(entry => entry.word));
 
-      // 1. Validate submission against standard English 4-letter dictionary
-      const validation = validateWordSubmission(upper, foundWordsSet);
+      // 1. Validate submission against standard English dictionary and this board's target words
+      const validation = validateWordSubmission(upper, foundWordsSet, targetWordsSet);
 
       if (!validation.isValid) {
         if (validation.status === 'ALREADY_FOUND') {
@@ -203,7 +226,7 @@ export default function App() {
         scoreBreakdown
       };
     },
-    [foundWords, lastWordTime, streak, board.solvableWords.length, mode, isTimerRunning, timeRemaining, isTimedGameOver]
+    [foundWords, lastWordTime, streak, board.solvableWords.length, mode, isTimerRunning, timeRemaining, isTimedGameOver, targetWordsSet]
   );
 
   // Request a hint for an undiscovered word (prioritizes 5, 6, 7, and 8-letter words)
@@ -353,6 +376,9 @@ export default function App() {
               onRequestHint={handleRequestHint}
               hintTileIndex={hintInfo?.tileIndex ?? null}
               hintMessage={hintInfo ? `Look for a ${hintInfo.wordLength}-letter word starting with "${hintInfo.startLetter}"` : null}
+              activeTileIndices={activeTileIndices}
+              outstandingWordsCount={outstandingWords.length}
+              totalWordsCount={board.solvableWords.length}
               onShuffleBoard={startNewGame}
             />
           </div>

@@ -14,6 +14,9 @@ interface GameBoardProps {
   onRequestHint: () => void;
   hintTileIndex: number | null;
   hintMessage?: string | null;
+  activeTileIndices?: Set<number>;
+  outstandingWordsCount?: number;
+  totalWordsCount?: number;
   onShuffleBoard: () => void;
 }
 
@@ -36,7 +39,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onClearHighlight,
   onRequestHint,
   hintTileIndex,
-  hintMessage
+  hintMessage,
+  activeTileIndices,
+  outstandingWordsCount,
+  totalWordsCount,
+  onShuffleBoard
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -81,6 +88,17 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     window.addEventListener('resize', updateTileCenters);
     return () => window.removeEventListener('resize', updateTileCenters);
   }, [updateTileCenters, tiles]);
+
+  // Play subtle feedback sound when letter tiles are removed from play
+  const prevActiveCount = useRef<number>(activeTileIndices ? activeTileIndices.size : 16);
+  useEffect(() => {
+    if (activeTileIndices) {
+      if (activeTileIndices.size < prevActiveCount.current) {
+        soundEffects.playClear();
+      }
+      prevActiveCount.current = activeTileIndices.size;
+    }
+  }, [activeTileIndices]);
 
   // Handle word evaluation and validation (4 to 16 characters)
   const evaluateWordPath = useCallback((path: number[]) => {
@@ -132,6 +150,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           type: 'warning',
           details: 'Only new words score points'
         });
+      } else if (result.status === 'NOT_IN_TARGET_WORDS') {
+        setStatusMessage({
+          text: `"${word}" is not on this board's target words!`,
+          type: 'warning',
+          details: `Find the ${totalWordsCount || 20} target words to clear the board`
+        });
       } else if (result.status === 'NOT_IN_DICTIONARY') {
         setStatusMessage({
           text: `"${word}" is not in the English dictionary`,
@@ -156,6 +180,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   // Pointer Down on a tile starts the swipe gesture
   const handleTilePointerDown = (index: number, e: React.PointerEvent) => {
     e.preventDefault();
+    if (activeTileIndices && !activeTileIndices.has(index)) return;
     onClearHighlight();
     setIsDragging(true);
     setSelectedPath([index]);
@@ -191,6 +216,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     if (tileAttr !== null && tileAttr !== undefined) {
       const targetIndex = parseInt(tileAttr, 10);
       if (isNaN(targetIndex) || targetIndex < 0 || targetIndex >= 16) return;
+      if (activeTileIndices && !activeTileIndices.has(targetIndex)) return;
 
       setSelectedPath(prev => {
         // If selection was cleared or empty, start fresh path from target
@@ -277,6 +303,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   // Accessible click-to-select for non-swipe users
   const handleTileClick = (index: number) => {
     if (isDragging) return; // Ignore if user was dragging
+    if (activeTileIndices && !activeTileIndices.has(index)) return;
     onClearHighlight();
 
     setSelectedPath(prev => {
@@ -530,6 +557,22 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             const isSelected = stepOrder !== -1;
             const isHint = hintTileIndex === index;
             const rarity = LETTER_RARITY_CONFIG[tile.letter]?.bonus || 0;
+            const isRemoved = activeTileIndices ? !activeTileIndices.has(index) : false;
+            const showForReplay = Boolean(highlightedPath && isSelected);
+
+            if (isRemoved && !showForReplay) {
+              return (
+                <div
+                  key={tile.id}
+                  className="relative flex items-center justify-center rounded-xl sm:rounded-2xl border border-dashed border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] pointer-events-none select-none transition-all duration-300 scale-95"
+                  title="Tile cleared! Not in any outstanding word."
+                >
+                  <span className="text-black/15 dark:text-white/15 text-xs font-bold font-mono">
+                    ✓
+                  </span>
+                </div>
+              );
+            }
 
             return (
               <div
@@ -645,10 +688,36 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Full Board Cleared Celebration Modal Overlay */}
+        <AnimatePresence>
+          {activeTileIndices && activeTileIndices.size === 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="absolute inset-0 z-40 flex flex-col items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md rounded-2xl text-center text-white"
+            >
+              <Sparkles className="w-12 h-12 text-amber-400 mb-2 animate-bounce" />
+              <h3 className="font-display font-black text-2xl text-amber-400 mb-1">
+                Board Cleared!
+              </h3>
+              <p className="text-sm text-slate-300 mb-4 max-w-xs">
+                You found all {totalWordsCount || 20} target words and cleared every tile!
+              </p>
+              <button
+                onClick={onShuffleBoard}
+                className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-emerald-500 text-white font-bold rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+              >
+                Play Next Board
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Grid Utility Bar: Clear path, Hint button, Replay state */}
-      <div className="flex items-center justify-between w-full mt-3 px-1 text-xs">
+      {/* Grid Utility Bar: Clear path, Active Tiles Progress, Hint button */}
+      <div className="flex items-center justify-between w-full mt-3 px-1 text-xs gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           {selectedPath.length > 0 && (
             <button
@@ -674,9 +743,32 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           )}
         </div>
 
+        {/* Live Active Tiles Counter & Cleared Tracker */}
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+          <span
+            className={`w-2 h-2 rounded-full ${
+              activeTileIndices && activeTileIndices.size === 0
+                ? 'bg-emerald-500'
+                : 'bg-amber-500 animate-pulse'
+            }`}
+          />
+          <span>
+            Tiles in play:{' '}
+            <strong className="text-slate-900 dark:text-white font-mono-nums">
+              {activeTileIndices ? activeTileIndices.size : 16}/16
+            </strong>
+          </span>
+          {activeTileIndices && activeTileIndices.size < 16 && (
+            <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[10px] ml-0.5">
+              ({16 - activeTileIndices.size} cleared!)
+            </span>
+          )}
+        </div>
+
         <button
           onClick={onRequestHint}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 font-medium transition-colors cursor-pointer ml-auto"
+          disabled={activeTileIndices !== undefined && activeTileIndices.size === 0}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ml-auto"
         >
           <Lightbulb className="w-3.5 h-3.5" />
           <span>Need a Hint?</span>

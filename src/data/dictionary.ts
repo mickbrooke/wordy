@@ -768,7 +768,8 @@ export function getWordDefinition(word: string): string | undefined {
  */
 export function validateWordSubmission(
   word: string,
-  alreadyFoundWords: Set<string>
+  alreadyFoundWords: Set<string>,
+  targetWordsSet?: Set<string>
 ): WordValidationResult {
   const upper = (word || '').toUpperCase().trim();
 
@@ -802,6 +803,17 @@ export function validateWordSubmission(
       word: upper,
       status: 'NOT_IN_DICTIONARY',
       message: `"${upper}" is not found in the English dictionary.`,
+    };
+  }
+
+  // Board target words check (when puzzle is limited to maximum 20 words)
+  if (targetWordsSet && !targetWordsSet.has(upper)) {
+    return {
+      isValid: false,
+      word: upper,
+      status: 'NOT_IN_TARGET_WORDS',
+      message: `"${upper}" is valid, but not one of this board's target words!`,
+      definition: getWordDefinition(upper),
     };
   }
 
