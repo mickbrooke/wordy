@@ -11,8 +11,8 @@ interface GameBoardProps {
   onWordCompleted: (word: string, path: number[]) => WordValidationResult;
   highlightedPath: number[] | null;
   onClearHighlight: () => void;
-  onRequestHint: () => void;
-  hintTileIndex: number | null;
+  onRequestHint?: () => void;
+  hintTileIndex?: number | null;
   hintMessage?: string | null;
   activeTileIndices?: Set<number>;
   outstandingWordsCount?: number;
@@ -617,12 +617,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       </motion.div>
 
       {/* Grid Utility Bar: Clear path, Submit Word, Active Tiles Progress, Hint button */}
-      <div className="flex items-center justify-between w-full mt-2.5 px-0.5 text-xs gap-2 flex-wrap">
-        <div className="flex items-center gap-1.5">
+      {/* Bottom Controls / Actions (only rendered when user is actively swiping or previewing) */}
+      {(selectedPath.length > 0 || highlightedPath) && (
+        <div className="flex items-center justify-center gap-2 w-full mt-2.5 px-0.5 text-xs">
           {selectedPath.length >= 4 && !highlightedPath && (
             <button
               onClick={() => evaluateWordPath(selectedPath)}
-              className="flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all cursor-pointer min-h-[36px] shadow-sm active:scale-95 text-xs"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all cursor-pointer min-h-[36px] shadow-sm active:scale-95 text-xs"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Submit ({selectedPath.length}L)</span>
@@ -636,7 +637,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 setSelectedPath([]);
                 setStatusMessage({ text: 'Selection cleared', type: 'idle' });
               }}
-              className="flex items-center gap-1 px-3 py-2 sm:py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer min-h-[36px]"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer min-h-[36px]"
             >
               <Undo2 className="w-3.5 h-3.5" />
               <span>Clear</span>
@@ -646,44 +647,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           {highlightedPath && (
             <button
               onClick={onClearHighlight}
-              className="flex items-center gap-1 px-3 py-2 sm:py-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 transition-colors cursor-pointer font-medium min-h-[36px]"
+              className="flex items-center gap-1 px-3 py-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 transition-colors cursor-pointer font-medium min-h-[36px]"
             >
               <span>Stop Preview</span>
             </button>
           )}
         </div>
-
-        {/* Live Active Tiles Counter & Cleared Tracker */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-[11px] font-medium text-slate-600 dark:text-slate-300 min-h-[36px]">
-          <span
-            className={`w-2 h-2 rounded-full ${
-              activeTileIndices && activeTileIndices.size === 0
-                ? 'bg-emerald-500'
-                : 'bg-amber-500 animate-pulse'
-            }`}
-          />
-          <span>
-            Tiles in play:{' '}
-            <strong className="text-slate-900 dark:text-white font-mono-nums">
-              {activeTileIndices ? activeTileIndices.size : 16}/16
-            </strong>
-          </span>
-          {activeTileIndices && activeTileIndices.size < 16 && (
-            <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[10px] ml-0.5">
-              ({16 - activeTileIndices.size} cleared!)
-            </span>
-          )}
-        </div>
-
-        <button
-          onClick={onRequestHint}
-          disabled={activeTileIndices !== undefined && activeTileIndices.size === 0}
-          className="flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ml-auto min-h-[36px]"
-        >
-          <Lightbulb className="w-3.5 h-3.5" />
-          <span>Need a Hint?</span>
-        </button>
-      </div>
+      )}
     </div>
   );
 };

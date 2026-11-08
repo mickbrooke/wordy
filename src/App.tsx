@@ -7,7 +7,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Header } from './components/Header.tsx';
 import { GameBoard } from './components/GameBoard.tsx';
 import { WordListPanel } from './components/WordListPanel.tsx';
-import { GameHUD } from './components/GameHUD.tsx';
 import { HowToPlayModal } from './components/HowToPlayModal.tsx';
 import { WordDetailModal } from './components/WordDetailModal.tsx';
 import { generateBoard } from './data/boardGenerator.ts';
@@ -44,11 +43,6 @@ export default function App() {
 
   // Inspector & Interactive highlights
   const [highlightedPath, setHighlightedPath] = useState<number[] | null>(null);
-  const [hintInfo, setHintInfo] = useState<{
-    tileIndex: number;
-    wordLength: number;
-    startLetter: string;
-  } | null>(null);
   const [activeWordDetail, setActiveWordDetail] = useState<{
     word: string;
     definition?: string;
@@ -74,7 +68,6 @@ export default function App() {
     setStreak(0);
     setLastWordTime(0);
     setHighlightedPath(null);
-    setHintInfo(null);
   }, []);
 
   const outstandingWords = useMemo(() => {
@@ -192,39 +185,6 @@ export default function App() {
     [foundWords, lastWordTime, streak, board.solvableWords.length]
   );
 
-  // Request a hint for an undiscovered word (prioritizes 5, 6, 7, and 8-letter words)
-  const handleRequestHint = useCallback(() => {
-    const foundSet = new Set(foundWords.map(w => w.word));
-    const undiscovered = board.solvableWords.filter(w => !foundSet.has(w.word));
-
-    if (undiscovered.length === 0) {
-      return;
-    }
-
-    // Prioritize 5, 6, 7, and 8-letter words so players uncover rich longer words
-    const longUndiscovered = undiscovered.filter(w => w.word.length >= 5 && w.word.length <= 8);
-    const targetCandidates = longUndiscovered.length > 0 ? longUndiscovered : undiscovered;
-    const targetWord = targetCandidates[Math.floor(Math.random() * targetCandidates.length)];
-
-    if (targetWord.paths.length > 0) {
-      const targetPath = targetWord.paths[0];
-      const startTile = targetPath[0];
-      const startLetter = board.tiles[startTile]?.letter || targetWord.word[0];
-
-      // Highlight the first tile of that word and set target length details
-      setHintInfo({
-        tileIndex: startTile,
-        wordLength: targetWord.word.length,
-        startLetter
-      });
-      soundEffects.playSwipeStep(0);
-
-      // Auto clear hint indicator after 4.5s
-      setTimeout(() => {
-        setHintInfo(null);
-      }, 4500);
-    }
-  }, [foundWords, board.solvableWords, board.tiles]);
 
   // Toggle audio
   const handleToggleSound = () => {
@@ -308,16 +268,6 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-2.5 sm:px-8 py-2.5 sm:py-5 flex flex-col">
-        {/* Game HUD (Words Found, Streak, Score) */}
-        <div className="mb-3 sm:mb-4">
-          <GameHUD
-            wordsFoundCount={foundWords.length}
-            totalSolvableCount={board.solvableWords.length}
-            score={score}
-            streak={streak}
-          />
-        </div>
-
         {/* 2-Column Responsive Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6 items-start flex-1">
           {/* Left / Center Column: 4x4 Swipe Grid */}
@@ -327,9 +277,6 @@ export default function App() {
               onWordCompleted={handleWordCompleted}
               highlightedPath={highlightedPath}
               onClearHighlight={() => setHighlightedPath(null)}
-              onRequestHint={handleRequestHint}
-              hintTileIndex={hintInfo?.tileIndex ?? null}
-              hintMessage={hintInfo ? `Look for a ${hintInfo.wordLength}-letter word starting with "${hintInfo.startLetter}"` : null}
               activeTileIndices={activeTileIndices}
               outstandingWordsCount={outstandingWords.length}
               totalWordsCount={board.solvableWords.length}
