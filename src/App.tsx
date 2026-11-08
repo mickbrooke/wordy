@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Header } from './components/Header.tsx';
+import { BottomToolbar } from './components/BottomToolbar.tsx';
 import { GameBoard } from './components/GameBoard.tsx';
 import { WordListPanel } from './components/WordListPanel.tsx';
 import { HowToPlayModal } from './components/HowToPlayModal.tsx';
@@ -254,24 +255,15 @@ export default function App() {
 
   return (
     <div className={`min-h-screen flex flex-col font-body transition-colors duration-200 ${themeClasses[theme]}`}>
-      {/* Top Header */}
-      <Header
-        soundEnabled={soundEnabled}
-        onToggleSound={handleToggleSound}
-        onNewGame={startNewGame}
-        onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
-        onShare={handleShare}
-        isCopied={isCopied}
-        theme={theme}
-        onChangeTheme={setTheme}
-      />
+      {/* Minimal Top Brand Bar */}
+      <Header />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-2.5 sm:px-8 py-2.5 sm:py-5 flex flex-col">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-2 sm:px-6 py-2 sm:py-4 pb-20 sm:pb-20 flex flex-col">
         {/* 2-Column Responsive Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6 items-start flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 sm:gap-4 lg:gap-6 items-start flex-1">
           {/* Left / Center Column: 4x4 Swipe Grid */}
-          <div className="lg:col-span-7 flex flex-col items-center justify-center p-2.5 sm:p-6 bg-white/50 dark:bg-slate-900/60 rounded-2xl sm:rounded-3xl border border-black/10 dark:border-white/10 backdrop-blur-md shadow-sm w-full">
+          <div className="lg:col-span-7 flex flex-col items-center justify-center p-2 xs:p-2.5 sm:p-5 bg-white/50 dark:bg-slate-900/60 rounded-xl sm:rounded-3xl border border-black/10 dark:border-white/10 backdrop-blur-md shadow-sm w-full">
             <GameBoard
               tiles={board.tiles}
               onWordCompleted={handleWordCompleted}
@@ -297,6 +289,18 @@ export default function App() {
           </div>
         </div>
       </main>
+
+      {/* Ergonomic Bottom Toolbar: New Board, Help, Theme, Sound, Share */}
+      <BottomToolbar
+        soundEnabled={soundEnabled}
+        onToggleSound={handleToggleSound}
+        onNewGame={startNewGame}
+        onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
+        onShare={handleShare}
+        isCopied={isCopied}
+        theme={theme}
+        onChangeTheme={setTheme}
+      />
 
       {/* Word Definition & Scoring Breakdown Modal */}
       <WordDetailModal

@@ -338,7 +338,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const activePath = highlightedPath || selectedPath;
 
   return (
-    <div className="flex flex-col items-center w-full max-w-md mx-auto select-none">
+    <div className="flex flex-col items-center w-full max-w-[290px] xs:max-w-[330px] sm:max-w-[390px] md:max-w-md mx-auto select-none">
       {/* Dynamic Hint Announcement Banner */}
       <AnimatePresence>
         {hintMessage && (
@@ -346,13 +346,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             initial={{ opacity: 0, y: -6, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
-            className="w-full mb-3 px-3.5 py-2 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-800 dark:text-amber-200 text-xs font-semibold flex items-center justify-between shadow-xs"
+            className="w-full mb-2.5 px-3 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-800 dark:text-amber-200 text-[11px] font-semibold flex items-center justify-between shadow-xs"
           >
-            <div className="flex items-center gap-2 min-w-0">
-              <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 animate-pulse" />
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0 animate-pulse" />
               <span className="truncate">{hintMessage}</span>
             </div>
-            <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider shrink-0 ml-2 bg-amber-500/20 px-1.5 py-0.5 rounded">
+            <span className="text-[9px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider shrink-0 ml-2 bg-amber-500/20 px-1 py-0.5 rounded">
               Long Word
             </span>
           </motion.div>
@@ -365,7 +365,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         key={shakeKey}
         animate={shakeKey > 0 ? { x: [-8, 8, -6, 6, -3, 3, 0] } : {}}
         transition={{ duration: 0.35 }}
-        className="relative w-full aspect-square p-2 sm:p-3 bg-slate-100/90 dark:bg-slate-900/90 rounded-2xl border border-black/10 dark:border-white/15 shadow-inner touch-none backdrop-blur-sm"
+        className="relative w-full aspect-square p-1.5 xs:p-2 sm:p-3 bg-slate-100/90 dark:bg-slate-900/90 rounded-xl sm:rounded-2xl border border-black/10 dark:border-white/15 shadow-inner touch-none backdrop-blur-sm"
       >
         {/* Floating status warning / error banner */}
         <AnimatePresence>
@@ -451,7 +451,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         </svg>
 
         {/* 4x4 Tiles Grid */}
-        <div className="grid grid-cols-4 grid-rows-4 gap-1.5 sm:gap-2.5 w-full h-full relative z-20">
+        <div className="grid grid-cols-4 grid-rows-4 gap-1 xs:gap-1.5 sm:gap-2.5 w-full h-full relative z-20">
           {tiles.map((tile, index) => {
             const stepOrder = activePath.indexOf(index);
             const isSelected = stepOrder !== -1;
@@ -464,10 +464,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               return (
                 <div
                   key={tile.id}
-                  className="relative flex items-center justify-center rounded-xl sm:rounded-2xl border border-dashed border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] pointer-events-none select-none transition-all duration-300 scale-95"
+                  className="relative flex items-center justify-center rounded-lg sm:rounded-2xl border border-dashed border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] pointer-events-none select-none transition-all duration-300 scale-95"
                   title="Tile cleared! Not in any outstanding word."
                 >
-                  <span className="text-black/15 dark:text-white/15 text-xs font-bold font-mono">
+                  <span className="text-black/15 dark:text-white/15 text-[10px] sm:text-xs font-bold font-mono">
                     ✓
                   </span>
                 </div>
@@ -481,7 +481,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 data-tile-index={index}
                 onPointerDown={(e) => handleTilePointerDown(index, e)}
                 onClick={() => handleTileClick(index)}
-                className={`relative flex items-center justify-center rounded-xl sm:rounded-2xl transition-all duration-150 cursor-pointer select-none ${
+                className={`relative flex items-center justify-center rounded-lg sm:rounded-2xl transition-all duration-150 cursor-pointer select-none ${
                   isSelected
                     ? 'bg-amber-500 text-white shadow-md -translate-y-0.5 scale-102 ring-2 sm:ring-4 ring-amber-400/40 dark:ring-amber-500/30'
                     : isHint
@@ -492,7 +492,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 {/* Rare letter point indicator badge in top right */}
                 {rarity > 0 && !isSelected && (
                   <span
-                    className={`absolute top-1 right-1 sm:top-1.5 sm:right-1.5 text-[9px] font-bold px-1 rounded-sm ${
+                    className={`absolute top-0.5 right-0.5 sm:top-1.5 sm:right-1.5 text-[7px] xs:text-[8px] sm:text-[9px] font-bold px-0.5 sm:px-1 rounded-xs sm:rounded-sm ${
                       rarity >= 30
                         ? 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300'
                         : rarity >= 20
@@ -507,7 +507,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
                 {/* Hint START indicator tag on top left */}
                 {isHint && !isSelected && (
-                  <span className="absolute top-1 left-1 sm:top-1.5 sm:left-1.5 bg-amber-500 text-white text-[8px] font-black px-1 py-0.5 rounded shadow-xs flex items-center gap-0.5 animate-bounce">
+                  <span className="absolute top-0.5 left-0.5 sm:top-1.5 sm:left-1.5 bg-amber-500 text-white text-[7px] sm:text-[8px] font-black px-1 py-0.5 rounded shadow-xs flex items-center gap-0.5 animate-bounce">
                     <Lightbulb className="w-2.5 h-2.5" />
                     START
                   </span>
@@ -515,18 +515,18 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
                 {/* Step badge on selected tile */}
                 {isSelected && (
-                  <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white text-amber-600 text-[10px] sm:text-xs font-bold flex items-center justify-center shadow-sm">
+                  <span className="absolute top-0.5 right-0.5 sm:top-1.5 sm:right-1.5 w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 rounded-full bg-white text-amber-600 text-[8px] xs:text-[9px] sm:text-xs font-bold flex items-center justify-center shadow-sm">
                     {stepOrder + 1}
                   </span>
                 )}
 
                 {/* Tile Letter */}
-                <span className="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
+                <span className="font-display text-lg xs:text-xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
                   {tile.letter}
                 </span>
 
                 {/* Subtle base value indicator */}
-                <span className="absolute bottom-1 right-1.5 text-[9px] font-mono opacity-30 font-bold">
+                <span className="absolute bottom-0.5 right-1 sm:bottom-1 sm:right-1.5 text-[7px] xs:text-[8px] sm:text-[9px] font-mono opacity-30 font-bold">
                   {rarity > 0 ? `+${rarity}` : '1'}
                 </span>
               </div>
