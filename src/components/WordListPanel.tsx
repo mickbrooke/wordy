@@ -145,7 +145,7 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
               <div className="p-3 bg-amber-500/10 dark:bg-amber-950/30 rounded-xl border border-amber-500/20 space-y-2">
                 <div className="flex items-center justify-between font-bold text-amber-800 dark:text-amber-300">
                   <span>QuadraWord Scoring System</span>
-                  <span className="text-[10px] uppercase tracking-wide">English Dictionary (4-16 L)</span>
+                  <span className="text-[10px] uppercase tracking-wide">Common English Words (4-16 L)</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
                   <div>
@@ -409,7 +409,7 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
             )}
             <div>
               <p className="font-semibold">
-                &quot;{testResult.word}&quot; is {testResult.isValid ? 'a valid English word!' : 'NOT in the dictionary (4-16 letters).'}
+                &quot;{testResult.word}&quot; is {testResult.isValid ? 'a valid common English word!' : 'NOT a recognized common English word.'}
               </p>
               {testResult.definition && (
                 <p className="text-[10px] opacity-80 mt-0.5">{testResult.definition}</p>

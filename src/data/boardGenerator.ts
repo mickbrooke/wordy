@@ -49,10 +49,10 @@ export function areNeighbors(
 // Curated pool of high-yield 6, 7, and 8-letter anchor words embedded along orthogonal walks
 const ANCHORS_POOL: string[] = [
   'SPRING', 'STREAM', 'PLANET', 'FLOWER', 'STRONG', 'SILVER', 'CASTLE', 'SUMMER',
-  'GOLDEN', 'STREET', 'TRAINS', 'BREADS', 'HEARTS', 'WATERS', 'BEAUTY', 'TRAVEL',
+  'GOLDEN', 'STREET', 'TRAINS', 'BREAD',  'HEARTS', 'WATERS', 'BEAUTY', 'TRAVEL',
   'WONDER', 'NATURE', 'ISLAND', 'FOREST', 'PRINCE', 'CLOUDS', 'WINTER', 'AUTUMN',
   'MARKET', 'VALLEY', 'DESERT', 'BRIDGE', 'SHADOW', 'SPIRIT', 'WINDOW', 'POCKET',
-  'POINTS', 'GARDEN', 'PLATES', 'STANDS', 'STARES', 'PLANTS', 'SPARKS', 'FRIEND',
+  'POINTS', 'GARDEN', 'PLATES', 'STANDS', 'STARE',  'PLANTS', 'SPARKS', 'FRIEND',
   'PRINTS', 'STORIES', 'JOURNEY', 'RAINBOW', 'WEATHER', 'COUNTRY', 'VILLAGE',
   'STATION', 'MORNING', 'BLANKET', 'LANTERN', 'WALKING', 'SMILING', 'TALKING',
   'POSTERS', 'MASTERS', 'FARMERS', 'WORKERS', 'HELPERS', 'LEADERS', 'READERS',
@@ -68,42 +68,42 @@ const BOGGLE_DICE: string[] = [
   'EIOSST', 'ELRTTY', 'HIMNUO', 'HLNNRZ'
 ];
 
-// Curated high-yield boards naturally possessing 13 to 18 total words and covering ALL 16 tiles
+// Curated high-yield boards consisting purely of COMMON words (13 to 17 words) and covering ALL 16 tiles
 export const CURATED_BOARDS: string[][] = [
-  // Board 0: 14 total words, 6 long words (RAINBOWY, JOURNEY, RAINBOW, BOWNE, INBYE, RUBAI...), covers all 16 tiles
+  // Board 0: 17 common words (GARDENER, GARDEN, GARNER, EARNED, DEAR, DRAG, EARN, GAPS, GEAR, GEMS, HARE, HEAP, HEAR, HEARD, MEGA, PAGE, RAGE)
   [
-    'R', 'J', 'O', 'L',
-    'A', 'B', 'U', 'R',
-    'I', 'O', 'W', 'N',
-    'N', 'B', 'Y', 'E'
+    'R', 'E', 'N', 'E',
+    'A', 'H', 'R', 'D',
+    'E', 'G', 'A', 'E',
+    'M', 'S', 'P', 'H'
   ],
-  // Board 1: 18 total words, 10 long words (MEINING, MORNING, MEINIE, TEEING, TINING, WINTER...), covers all 16 tiles
+  // Board 1: 13 common words (PLANET, PLANE, PLAN, TENOR, PRONE, PROOF, ROOF, SEEN, SOON, TEEN, TEES, LANE, NEAL)
   [
-    'W', 'E', 'M', 'O',
-    'I', 'I', 'N', 'R',
-    'N', 'T', 'I', 'N',
-    'R', 'E', 'E', 'G'
+    'N', 'E', 'A', 'L',
+    'T', 'E', 'N', 'P',
+    'E', 'E', 'O', 'R',
+    'T', 'S', 'O', 'F'
   ],
-  // Board 2: 18 total words, 9 long words (BUILDER, POINTS, POLDER, BUILD, OINTS, OLDER, POINT...), covers all 16 tiles
+  // Board 2: 17 common words (STATION, STABLE, TABLET, TABLETS, TABLE, INTENT, INTEL, STEIN, TENT, STAT, STAB, LETS, LENT, NETS, BATS, ABLE, NITE)
   [
-    'S', 'T', 'B', 'U',
-    'N', 'N', 'P', 'I',
-    'T', 'I', 'O', 'L',
-    'N', 'R', 'E', 'D'
+    'N', 'T', 'S', 'S',
+    'I', 'E', 'L', 'T',
+    'T', 'N', 'B', 'A',
+    'E', 'O', 'I', 'T'
   ],
-  // Board 3: 13 total words, 6 long words (BUILDER, PLANETS, PLANET, ALDER, BUILD, PLANE...), covers all 16 tiles
+  // Board 3: 15 common words (ESTATE, STATION, STATE, STEEL, TEASE, YEAST, ANTI, ANTE, EASE, EAST, LEST, STAT, TATE, TEAS, TEES)
   [
-    'T', 'B', 'U', 'I',
-    'E', 'N', 'A', 'L',
-    'T', 'P', 'L', 'D',
-    'S', 'K', 'R', 'E'
+    'I', 'Y', 'L', 'T',
+    'T', 'E', 'E', 'E',
+    'N', 'A', 'S', 'T',
+    'O', 'I', 'T', 'A'
   ],
-  // Board 4: 13 total words, 5 long words (HUNTERS, VILLAGE, HUNTER, ALLIS, VILLA, EGAL...), covers all 16 tiles
+  // Board 4: 16 common words (ISLAND, AISLE, TENTS, TENT, TONE, TONS, NOTE, NEAT, SONS, TENS, LENS, LENT, LEAD, LAND, ISLE, INNS)
   [
-    'H', 'T', 'E', 'R',
-    'U', 'N', 'R', 'S',
-    'E', 'G', 'L', 'I',
-    'V', 'A', 'L', 'V'
+    'N', 'I', 'A', 'N',
+    'N', 'S', 'L', 'D',
+    'T', 'N', 'E', 'A',
+    'S', 'O', 'T', 'T'
   ]
 ];
 
