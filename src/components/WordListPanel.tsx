@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   CheckCircle2,
@@ -44,15 +44,32 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
     definition?: string;
   } | null>(null);
 
-  const totalPossible = solvableWords.length;
+  // Map of discovered words by word string
+  const foundMap = useMemo(() => {
+    return new Map(foundWords.map(f => [f.word, f]));
+  }, [foundWords]);
+
+  // Unified list of all target words on this board, combining pre-indexed solvableWords with any discovered valid words
+  const allTargetWords = useMemo(() => {
+    const list = [...solvableWords];
+    const existing = new Set(solvableWords.map(w => w.word));
+    for (const f of foundWords) {
+      if (!existing.has(f.word)) {
+        list.push({
+          word: f.word,
+          paths: [f.path],
+          definition: f.definition,
+          estimatedPoints: f.points,
+        });
+      }
+    }
+    // Keep sorted by word length descending, then alphabetical
+    return list.sort((a, b) => b.word.length - a.word.length || a.word.localeCompare(b.word));
+  }, [solvableWords, foundWords]);
+
+  const totalPossible = allTargetWords.length;
   const foundCount = foundWords.length;
   const progressPercent = totalPossible > 0 ? Math.round((foundCount / totalPossible) * 100) : 0;
-
-  // Words feed in order discovered
-  const displayedWords = foundWords;
-
-  // Set of found word strings
-  const foundWordsSet = new Set(foundWords.map(w => w.word));
 
   // Run test word verification
   const handleTestWordCheck = (e: React.FormEvent) => {
@@ -155,150 +172,197 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
 
       </div>
 
-      {/* Words List Container */}
+      {/* Words List Container with Placeholders */}
       <div className="flex-1 overflow-y-auto p-3 space-y-1.5 min-h-[260px] max-h-[380px] sm:max-h-[460px]">
-        {foundWords.length === 0 ? (
+        {allTargetWords.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-10 px-4 text-slate-400">
             <Sparkles className="w-8 h-8 text-amber-400/60 mb-2" />
             <p className="font-semibold text-sm text-slate-600 dark:text-slate-300">
-              No words discovered yet
-            </p>
-            <p className="text-xs text-slate-400 max-w-xs mt-1">
-              Swipe or tap 4 to 16 adjacent letters (horizontal & vertical) to create valid words. Longer words earn huge exponential bonus points!
+              No words on this board
             </p>
           </div>
         ) : (
           <AnimatePresence initial={false}>
-            {displayedWords.map((item) => {
-              const isSelectedForReplay =
-                activeReplayPath &&
-                activeReplayPath.length === item.path.length &&
-                activeReplayPath.every((val, i) => val === item.path[i]);
+            {allTargetWords.map((target) => {
+              const foundEntry = foundMap.get(target.word);
+              const isFound = Boolean(foundEntry);
 
-              const b = item.scoreBreakdown;
+              // 1. Discovered / Found Word: Fills in the placeholder!
+              if (isFound && foundEntry) {
+                const isSelectedForReplay =
+                  activeReplayPath &&
+                  activeReplayPath.length === foundEntry.path.length &&
+                  activeReplayPath.every((val, i) => val === foundEntry.path[i]);
 
-              return (
-                <motion.div
-                  key={`${item.word}-${item.timestamp}`}
-                  initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
-                    isSelectedForReplay
-                      ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-400 dark:border-blue-500 shadow-sm'
-                      : 'bg-slate-50/80 dark:bg-slate-800/60 border-black/5 dark:border-white/5 hover:border-black/15 dark:hover:border-white/15'
-                  }`}
-                >
-                  {/* Word title & points breakdown */}
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <div>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-display font-extrabold text-base tracking-wider text-slate-900 dark:text-white">
-                          {item.word}
-                        </span>
+                const b = foundEntry.scoreBreakdown;
 
-                        {/* Length badge */}
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 rounded font-mono">
-                          {item.word.length}L
-                        </span>
-
-                        <span className="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono-nums">
-                          +{item.points} pts
-                        </span>
-
-                        {/* Badges for rare letter or speed bonus */}
-                        {b && b.rareLetterBonus > 0 && (
-                          <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 rounded">
-                            <Star className="w-2.5 h-2.5" />
-                            +{b.rareLetterBonus} rare
+                return (
+                  <motion.div
+                    key={target.word}
+                    layout
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.25 }}
+                    className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                      isSelectedForReplay
+                        ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-400 dark:border-blue-500 shadow-sm'
+                        : 'bg-emerald-500/[0.04] dark:bg-emerald-500/[0.07] border-emerald-500/25 hover:border-emerald-500/40'
+                    }`}
+                  >
+                    {/* Word title & points breakdown */}
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-display font-extrabold text-base tracking-wider text-slate-900 dark:text-white">
+                            {foundEntry.word}
                           </span>
-                        )}
 
-                        {b && b.speedBonus > 0 && (
-                          <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded">
-                            <Zap className="w-2.5 h-2.5" />
-                            +{b.speedBonus} speed
+                          {/* Length badge */}
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 rounded font-mono">
+                            {foundEntry.word.length}L
                           </span>
+
+                          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono-nums">
+                            +{foundEntry.points} pts
+                          </span>
+
+                          {/* Badges for rare letter or speed bonus */}
+                          {b && b.rareLetterBonus > 0 && (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 rounded">
+                              <Star className="w-2.5 h-2.5" />
+                              +{b.rareLetterBonus} rare
+                            </span>
+                          )}
+
+                          {b && b.speedBonus > 0 && (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded">
+                              <Zap className="w-2.5 h-2.5" />
+                              +{b.speedBonus} speed
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Definition preview or base score text */}
+                        {foundEntry.definition ? (
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 truncate max-w-[170px] sm:max-w-[210px] mt-0.5">
+                            {foundEntry.definition}
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-slate-400 mt-0.5 font-mono">
+                            Base: {b?.baseLengthPoints || 100} pts · Standard dictionary word
+                          </p>
                         )}
                       </div>
+                    </div>
 
-                      {/* Definition preview or score breakdown text */}
-                      {item.definition ? (
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 truncate max-w-[170px] sm:max-w-[210px] mt-0.5">
-                          {item.definition}
-                        </p>
-                      ) : (
-                        <p className="text-[10px] text-slate-400 mt-0.5 font-mono">
-                          Base: {b?.baseLengthPoints || 100} pts · Standard dictionary word
-                        </p>
-                      )}
+                    {/* Actions: Show Path on Board & View Definition */}
+                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                      <button
+                        onClick={() => onSelectWordForReplay(foundEntry.path)}
+                        title="Highlight word path on the grid"
+                        className={`p-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                          isSelectedForReplay
+                            ? 'bg-blue-500 text-white'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white'
+                        }`}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => onOpenDefinition(foundEntry.word, foundEntry.definition, foundEntry.scoreBreakdown)}
+                        title="Word Definition & Point Breakdown"
+                        className="p-1.5 rounded-lg text-xs text-slate-500 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              }
+
+              // 2. Unfound Word: Revealed Mode (Surrender / Inspector mode)
+              if (showAllSolvable) {
+                return (
+                  <motion.div
+                    key={target.word}
+                    layout
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex items-center justify-between p-2.5 rounded-xl border border-amber-500/25 bg-amber-500/5 dark:bg-amber-950/20 text-slate-700 dark:text-slate-300"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Eye className="w-4 h-4 text-amber-500 shrink-0" />
+                      <div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-display font-bold text-base tracking-wider text-amber-800 dark:text-amber-300">
+                            {target.word}
+                          </span>
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 rounded font-mono">
+                            {target.word.length}L
+                          </span>
+                          <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 font-mono-nums">
+                            +{target.estimatedPoints || 100} pts
+                          </span>
+                        </div>
+                        {target.definition && (
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 truncate max-w-[170px] sm:max-w-[210px] mt-0.5">
+                            {target.definition}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {target.paths.length > 0 && (
+                      <button
+                        onClick={() => onSelectWordForReplay(target.paths[0])}
+                        title="Show path on board"
+                        className="p-1.5 rounded-lg text-xs text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-colors cursor-pointer shrink-0 ml-2"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </motion.div>
+                );
+              }
+
+              // 3. Unfound Word: Mystery Placeholder with visual letter dashes!
+              return (
+                <motion.div
+                  key={target.word}
+                  layout
+                  className="flex items-center justify-between p-2.5 rounded-xl border border-dashed border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] text-slate-400"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-4 h-4 rounded-full border border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded font-mono">
+                        {target.word.length}L
+                      </span>
+                      {/* Mystery letter dash placeholders */}
+                      <div className="flex items-center gap-1 py-1" aria-label={`${target.word.length} letters`}>
+                        {Array.from({ length: target.word.length }).map((_, letterIdx) => (
+                          <span
+                            key={letterIdx}
+                            className="w-3 sm:w-3.5 h-1 rounded-full bg-slate-300 dark:bg-slate-600"
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Actions: Show Path on Board & View Definition */}
-                  <div className="flex items-center gap-1 shrink-0 ml-2">
-                    <button
-                      onClick={() => onSelectWordForReplay(item.path)}
-                      title="Highlight word path on the grid"
-                      className={`p-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
-                        isSelectedForReplay
-                          ? 'bg-blue-500 text-white'
-                          : 'text-slate-500 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white'
-                      }`}
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => onOpenDefinition(item.word, item.definition, item.scoreBreakdown)}
-                      title="Word Definition & Point Breakdown"
-                      className="p-1.5 rounded-lg text-xs text-slate-500 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer"
-                    >
-                      <BookOpen className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  <span className="text-xs font-mono font-medium text-slate-400 dark:text-slate-500 shrink-0 ml-2">
+                    ~{target.estimatedPoints || 100} pts
+                  </span>
                 </motion.div>
               );
             })}
           </AnimatePresence>
-        )}
-
-        {/* Revealed Solvable Words (Surrender/Inspector mode) */}
-        {showAllSolvable && (
-          <div className="mt-4 pt-4 border-t border-dashed border-black/15 dark:border-white/15">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Solvable Words ({solvableWords.length})
-              </h4>
-              <span className="text-[10px] text-slate-400">Validated by English dictionary</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-              {solvableWords.map((solvable) => {
-                const isFound = foundWordsSet.has(solvable.word);
-                return (
-                  <button
-                    key={solvable.word}
-                    onClick={() => {
-                      if (solvable.paths.length > 0) {
-                        onSelectWordForReplay(solvable.paths[0]);
-                      }
-                    }}
-                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium border text-left transition-colors cursor-pointer ${
-                      isFound
-                        ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
-                        : 'bg-black/5 dark:bg-white/5 border-transparent text-slate-600 dark:text-slate-400 hover:border-black/10'
-                    }`}
-                  >
-                    <span className="font-bold tracking-wide">{solvable.word}</span>
-                    <span className="text-[10px] font-mono-nums opacity-60">
-                      {isFound ? '✓' : `${solvable.estimatedPoints || 100}p`}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         )}
       </div>
 
@@ -349,7 +413,7 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
       {/* Footer: Summary & Reveal/Hide Solution Mode */}
       <div className="p-3 border-t border-black/10 dark:border-white/10 bg-slate-50/50 dark:bg-slate-850/50 flex items-center justify-between gap-2 text-xs">
         <span className="text-slate-500 dark:text-slate-400 text-[11px]">
-          {foundCount} of {totalPossible} collected
+          {foundCount} of {totalPossible} words found
         </span>
         <button
           onClick={() => setShowAllSolvable(prev => !prev)}
@@ -358,12 +422,12 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
           {showAllSolvable ? (
             <>
               <EyeOff className="w-3.5 h-3.5" />
-              <span>Hide Full List</span>
+              <span>Hide Unfound Words</span>
             </>
           ) : (
             <>
               <Eye className="w-3.5 h-3.5" />
-              <span>Reveal All {totalPossible} Words</span>
+              <span>Reveal All Words</span>
             </>
           )}
         </button>
