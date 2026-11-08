@@ -385,28 +385,28 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           <div className="flex items-center justify-between">
             {/* Dynamic letter composition slots (4 to 16 letters) */}
             {activePath.length === 0 ? (
-              <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 {[0, 1, 2, 3].map((slotIdx) => (
                   <div
                     key={slotIdx}
-                    className="w-8 h-9 sm:w-9 sm:h-10 rounded-lg border-2 border-dashed border-black/15 dark:border-white/20 flex items-center justify-center text-slate-400/50 font-display font-bold text-sm"
+                    className="w-7 h-8 sm:w-9 sm:h-10 rounded-lg border-2 border-dashed border-black/15 dark:border-white/20 flex items-center justify-center text-slate-400/50 font-display font-bold text-xs sm:text-sm"
                   >
                     •
                   </div>
                 ))}
-                <span className="text-[11px] text-slate-400 dark:text-slate-500 ml-1">
-                  4 - 16 letters
+                <span className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 ml-0.5 sm:ml-1">
+                  4 - 16 L
                 </span>
               </div>
             ) : (
-              <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto max-w-[210px] sm:max-w-[250px] py-0.5 scrollbar-none">
+              <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto max-w-[150px] xs:max-w-[200px] sm:max-w-[250px] py-0.5 scrollbar-none">
                 {activePath.map((tileIdx, stepIdx) => {
                   const letter = tiles[tileIdx]?.letter || '';
                   const rarity = LETTER_RARITY_CONFIG[letter]?.bonus || 0;
 
                   return (
                     <div key={`ribbon-${tileIdx}-${stepIdx}`} className="flex flex-col items-center shrink-0">
-                      <div className="relative min-w-[28px] h-8 sm:min-w-[32px] sm:h-9 px-1 rounded-lg flex items-center justify-center font-display text-base sm:text-lg font-bold bg-amber-500 text-white shadow-xs transition-all">
+                      <div className="relative min-w-[26px] h-7.5 sm:min-w-[32px] sm:h-9 px-1 rounded-lg flex items-center justify-center font-display text-sm sm:text-lg font-bold bg-amber-500 text-white shadow-xs transition-all">
                         {letter}
                         {rarity > 0 && (
                           <span className="absolute -top-1.5 -right-1.5 px-1 py-0.2 bg-purple-600 text-[8px] font-extrabold text-white rounded-full shadow-xs">
@@ -421,12 +421,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             )}
 
             {/* Live point preview, submit action button, and letter count */}
-            <div className="flex items-center gap-2 pl-2 text-right shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-2 text-right shrink-0">
               {/* Tap-mode explicit submit button when word is at least 4 letters */}
               {selectedPath.length >= 4 && !highlightedPath && (
                 <button
                   onClick={() => evaluateWordPath(selectedPath)}
-                  className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                  className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1 cursor-pointer active:scale-95 min-h-[32px]"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Submit</span>
@@ -477,7 +477,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       {/* 4x4 Grid Container */}
       <div
         ref={containerRef}
-        className="relative w-full aspect-square p-2.5 sm:p-3 bg-slate-100/90 dark:bg-slate-900/90 rounded-2xl border border-black/10 dark:border-white/15 shadow-inner touch-none backdrop-blur-sm"
+        className="relative w-full aspect-square p-2 sm:p-3 bg-slate-100/90 dark:bg-slate-900/90 rounded-2xl border border-black/10 dark:border-white/15 shadow-inner touch-none backdrop-blur-sm"
       >
         {/* Dynamic SVG Connection Line Overlay */}
         <svg
@@ -545,7 +545,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         </svg>
 
         {/* 4x4 Tiles Grid */}
-        <div className="grid grid-cols-4 grid-rows-4 gap-2 sm:gap-2.5 w-full h-full relative z-20">
+        <div className="grid grid-cols-4 grid-rows-4 gap-1.5 sm:gap-2.5 w-full h-full relative z-20">
           {tiles.map((tile, index) => {
             const stepOrder = activePath.indexOf(index);
             const isSelected = stepOrder !== -1;
@@ -711,8 +711,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       </div>
 
       {/* Grid Utility Bar: Clear path, Active Tiles Progress, Hint button */}
-      <div className="flex items-center justify-between w-full mt-3 px-1 text-xs gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between w-full mt-2.5 px-0.5 text-xs gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5">
           {selectedPath.length > 0 && (
             <button
               onClick={() => {
@@ -720,7 +720,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 setSelectedPath([]);
                 setStatusMessage({ text: 'Selection cleared', type: 'idle' });
               }}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-3 py-2 sm:py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer min-h-[36px]"
             >
               <Undo2 className="w-3.5 h-3.5" />
               <span>Clear</span>
@@ -730,7 +730,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           {highlightedPath && (
             <button
               onClick={onClearHighlight}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 transition-colors cursor-pointer font-medium"
+              className="flex items-center gap-1 px-3 py-2 sm:py-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 transition-colors cursor-pointer font-medium min-h-[36px]"
             >
               <span>Stop Preview</span>
             </button>
@@ -738,7 +738,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         </div>
 
         {/* Live Active Tiles Counter & Cleared Tracker */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-[11px] font-medium text-slate-600 dark:text-slate-300 min-h-[36px]">
           <span
             className={`w-2 h-2 rounded-full ${
               activeTileIndices && activeTileIndices.size === 0
@@ -762,7 +762,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         <button
           onClick={onRequestHint}
           disabled={activeTileIndices !== undefined && activeTileIndices.size === 0}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ml-auto"
+          className="flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ml-auto min-h-[36px]"
         >
           <Lightbulb className="w-3.5 h-3.5" />
           <span>Need a Hint?</span>

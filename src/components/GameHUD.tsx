@@ -31,12 +31,12 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   };
 
   return (
-    <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3 py-2 px-1 text-sm">
-      {/* Mode Selector Tabs */}
-      <div className="flex items-center p-1 bg-black/5 dark:bg-white/10 rounded-xl">
+    <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-2.5 py-1 px-0.5 text-sm">
+      {/* Mode Selector Tabs (Equal width & touch-friendly on mobile) */}
+      <div className="w-full sm:w-auto flex items-center p-1 bg-black/5 dark:bg-white/10 rounded-xl">
         <button
           onClick={() => onChangeMode('relaxed')}
-          className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+          className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer text-center justify-center flex items-center min-h-[36px] ${
             mode === 'relaxed'
               ? 'bg-white dark:bg-slate-850 text-slate-900 dark:text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
@@ -46,19 +46,19 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         </button>
         <button
           onClick={() => onChangeMode('timed')}
-          className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 ${
+          className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer text-center justify-center flex items-center gap-1.5 min-h-[36px] ${
             mode === 'timed'
               ? 'bg-white dark:bg-slate-850 text-slate-900 dark:text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
           }`}
         >
-          <Timer className="w-3.5 h-3.5 text-amber-500" />
+          <Timer className="w-3.5 h-3.5 text-amber-500 shrink-0" />
           <span>Timed (2 Min)</span>
         </button>
       </div>
 
       {/* Metrics & Status */}
-      <div className="flex items-center gap-4 text-xs font-medium text-slate-600 dark:text-slate-300">
+      <div className="w-full sm:w-auto flex items-center justify-around sm:justify-end gap-2.5 sm:gap-4 text-xs font-medium text-slate-600 dark:text-slate-300 py-0.5 flex-wrap">
         {/* Blitz Countdown Timer */}
         {mode === 'timed' && (
           <div className="flex items-center gap-1.5">

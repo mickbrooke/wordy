@@ -363,9 +363,9 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-8 py-5 flex flex-col">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-2.5 sm:px-8 py-2.5 sm:py-5 flex flex-col">
         {/* Game HUD (Score, Mode, Timer, Streak) */}
-        <div className="mb-4">
+        <div className="mb-3 sm:mb-4">
           <GameHUD
             mode={mode}
             onChangeMode={handleChangeMode}
@@ -384,9 +384,9 @@ export default function App() {
         </div>
 
         {/* 2-Column Responsive Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6 items-start flex-1">
           {/* Left / Center Column: 4x4 Swipe Grid */}
-          <div className="lg:col-span-7 flex flex-col items-center justify-center p-3 sm:p-6 bg-white/50 dark:bg-slate-900/60 rounded-3xl border border-black/10 dark:border-white/10 backdrop-blur-md shadow-sm">
+          <div className="lg:col-span-7 flex flex-col items-center justify-center p-2.5 sm:p-6 bg-white/50 dark:bg-slate-900/60 rounded-2xl sm:rounded-3xl border border-black/10 dark:border-white/10 backdrop-blur-md shadow-sm w-full">
             <GameBoard
               tiles={board.tiles}
               onWordCompleted={handleWordCompleted}

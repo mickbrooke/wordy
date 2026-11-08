@@ -187,7 +187,7 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
               const foundEntry = foundMap.get(target.word);
               const isFound = Boolean(foundEntry);
 
-              // 1. Discovered / Found Word: Fills in the placeholder!
+              // 1. Discovered / Found Word: Fills into tile-shaped placeholders matching main grid!
               if (isFound && foundEntry) {
                 const isSelectedForReplay =
                   activeReplayPath &&
@@ -204,61 +204,61 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.25 }}
-                    className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                    className={`flex items-center justify-between p-2 sm:p-2.5 rounded-xl border transition-all gap-2 ${
                       isSelectedForReplay
-                        ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-400 dark:border-blue-500 shadow-sm'
+                        ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-400 dark:border-blue-500 shadow-sm'
                         : 'bg-emerald-500/[0.04] dark:bg-emerald-500/[0.07] border-emerald-500/25 hover:border-emerald-500/40'
                     }`}
                   >
-                    {/* Word title & points breakdown */}
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    {/* Word tile container & details */}
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-display font-extrabold text-base tracking-wider text-slate-900 dark:text-white">
-                            {foundEntry.word}
+                      
+                      {/* Length badge */}
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded font-mono shrink-0">
+                        {foundEntry.word.length}L
+                      </span>
+
+                      {/* Letter Tiles matching the main grid characters */}
+                      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5 shrink-0 max-w-[150px] xs:max-w-[190px] sm:max-w-[240px]">
+                        {foundEntry.word.split('').map((char, charIdx) => (
+                          <div
+                            key={charIdx}
+                            className={`w-6 h-7 sm:w-7 sm:h-8 rounded-md sm:rounded-lg font-display font-extrabold text-xs sm:text-sm flex items-center justify-center shrink-0 select-none shadow-2xs border transition-all ${
+                              isSelectedForReplay
+                                ? 'bg-blue-500 text-white border-blue-600 scale-102'
+                                : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-black/10 dark:border-white/10'
+                            }`}
+                          >
+                            {char}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Points badge & bonuses */}
+                      <div className="flex items-center gap-1 shrink-0 flex-wrap">
+                        <span className="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono-nums">
+                          +{foundEntry.points}
+                        </span>
+
+                        {b && b.rareLetterBonus > 0 && (
+                          <span className="hidden sm:inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-0.2 bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 rounded">
+                            <Star className="w-2.5 h-2.5" />
+                            +{b.rareLetterBonus}
                           </span>
+                        )}
 
-                          {/* Length badge */}
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 rounded font-mono">
-                            {foundEntry.word.length}L
+                        {b && b.speedBonus > 0 && (
+                          <span className="hidden sm:inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-0.2 bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded">
+                            <Zap className="w-2.5 h-2.5" />
+                            +{b.speedBonus}
                           </span>
-
-                          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono-nums">
-                            +{foundEntry.points} pts
-                          </span>
-
-                          {/* Badges for rare letter or speed bonus */}
-                          {b && b.rareLetterBonus > 0 && (
-                            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 rounded">
-                              <Star className="w-2.5 h-2.5" />
-                              +{b.rareLetterBonus} rare
-                            </span>
-                          )}
-
-                          {b && b.speedBonus > 0 && (
-                            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded">
-                              <Zap className="w-2.5 h-2.5" />
-                              +{b.speedBonus} speed
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Definition preview or base score text */}
-                        {foundEntry.definition ? (
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 truncate max-w-[170px] sm:max-w-[210px] mt-0.5">
-                            {foundEntry.definition}
-                          </p>
-                        ) : (
-                          <p className="text-[10px] text-slate-400 mt-0.5 font-mono">
-                            Base: {b?.baseLengthPoints || 100} pts · Standard dictionary word
-                          </p>
                         )}
                       </div>
                     </div>
 
                     {/* Actions: Show Path on Board & View Definition */}
-                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                    <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => onSelectWordForReplay(foundEntry.path)}
                         title="Highlight word path on the grid"
@@ -292,35 +292,37 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.15 }}
-                    className="flex items-center justify-between p-2.5 rounded-xl border border-amber-500/25 bg-amber-500/5 dark:bg-amber-950/20 text-slate-700 dark:text-slate-300"
+                    className="flex items-center justify-between p-2 sm:p-2.5 rounded-xl border border-amber-500/25 bg-amber-500/5 dark:bg-amber-950/20 text-slate-700 dark:text-slate-300 gap-2"
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <Eye className="w-4 h-4 text-amber-500 shrink-0" />
-                      <div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-display font-bold text-base tracking-wider text-amber-800 dark:text-amber-300">
-                            {target.word}
-                          </span>
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 rounded font-mono">
-                            {target.word.length}L
-                          </span>
-                          <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 font-mono-nums">
-                            +{target.estimatedPoints || 100} pts
-                          </span>
-                        </div>
-                        {target.definition && (
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 truncate max-w-[170px] sm:max-w-[210px] mt-0.5">
-                            {target.definition}
-                          </p>
-                        )}
+                      
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 rounded font-mono shrink-0">
+                        {target.word.length}L
+                      </span>
+
+                      {/* Revealed Letter Tiles */}
+                      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5 shrink-0 max-w-[150px] xs:max-w-[190px] sm:max-w-[240px]">
+                        {target.word.split('').map((char, charIdx) => (
+                          <div
+                            key={charIdx}
+                            className="w-6 h-7 sm:w-7 sm:h-8 rounded-md sm:rounded-lg font-display font-extrabold text-xs sm:text-sm flex items-center justify-center shrink-0 select-none shadow-2xs border bg-amber-500/10 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 border-amber-500/30"
+                          >
+                            {char}
+                          </div>
+                        ))}
                       </div>
+
+                      <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 font-mono-nums shrink-0">
+                        +{target.estimatedPoints || 100}
+                      </span>
                     </div>
 
                     {target.paths.length > 0 && (
                       <button
                         onClick={() => onSelectWordForReplay(target.paths[0])}
                         title="Show path on board"
-                        className="p-1.5 rounded-lg text-xs text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-colors cursor-pointer shrink-0 ml-2"
+                        className="p-1.5 rounded-lg text-xs text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-colors cursor-pointer shrink-0"
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </button>
@@ -329,34 +331,41 @@ export const WordListPanel: React.FC<WordListPanelProps> = ({
                 );
               }
 
-              // 3. Unfound Word: Mystery Placeholder with visual letter dashes!
+              // 3. Unfound Word: Tile-shaped placeholders matching main grid character tiles!
               return (
                 <motion.div
                   key={target.word}
                   layout
-                  className="flex items-center justify-between p-2.5 rounded-xl border border-dashed border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] text-slate-400"
+                  className="flex items-center justify-between p-2 sm:p-2.5 rounded-xl border border-dashed border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] text-slate-400 gap-2"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
                     <div className="w-4 h-4 rounded-full border border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center shrink-0">
                       <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded font-mono">
-                        {target.word.length}L
-                      </span>
-                      {/* Mystery letter dash placeholders */}
-                      <div className="flex items-center gap-1 py-1" aria-label={`${target.word.length} letters`}>
-                        {Array.from({ length: target.word.length }).map((_, letterIdx) => (
-                          <span
-                            key={letterIdx}
-                            className="w-3 sm:w-3.5 h-1 rounded-full bg-slate-300 dark:bg-slate-600"
-                          />
-                        ))}
-                      </div>
+
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded font-mono shrink-0">
+                      {target.word.length}L
+                    </span>
+
+                    {/* Mystery tile placeholders shaped identically to main grid character tiles */}
+                    <div
+                      className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5 shrink-0 max-w-[150px] xs:max-w-[190px] sm:max-w-[240px]"
+                      aria-label={`${target.word.length} letters mystery tiles`}
+                    >
+                      {Array.from({ length: target.word.length }).map((_, slotIdx) => (
+                        <div
+                          key={slotIdx}
+                          className="w-6 h-7 sm:w-7 sm:h-8 rounded-md sm:rounded-lg border-2 border-dashed border-slate-300/80 dark:border-slate-700/80 bg-slate-100/60 dark:bg-slate-800/40 shadow-2xs flex items-center justify-center shrink-0 select-none"
+                        >
+                          <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600 select-none">
+                            ?
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
-                  <span className="text-xs font-mono font-medium text-slate-400 dark:text-slate-500 shrink-0 ml-2">
+                  <span className="text-xs font-mono font-medium text-slate-400 dark:text-slate-500 shrink-0">
                     ~{target.estimatedPoints || 100} pts
                   </span>
                 </motion.div>
