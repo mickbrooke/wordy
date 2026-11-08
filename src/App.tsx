@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Header } from './components/Header.tsx';
 import { GameBoard } from './components/GameBoard.tsx';
 import { WordListPanel } from './components/WordListPanel.tsx';
@@ -17,14 +17,12 @@ import { soundEffects } from './utils/audio.ts';
 import { fireWordConfetti, fireMilestoneConfetti } from './utils/confetti.ts';
 import {
   FoundWordEntry,
-  GameMode,
   GameTheme,
   BoardTile,
   SolvableWord,
   WordValidationResult,
   ScoreBreakdown
 } from './types.ts';
-import { RotateCcw, Trophy, Zap, Star, Share2 } from 'lucide-react';
 
 export default function App() {
   // Board state
@@ -44,12 +42,6 @@ export default function App() {
   const [soundEnabled, setSoundEnabled] = useState<boolean>(soundEffects.isEnabled());
   const [theme, setTheme] = useState<GameTheme>('slate');
 
-  // Mode & Timer
-  const [mode, setMode] = useState<GameMode>('relaxed');
-  const [timeRemaining, setTimeRemaining] = useState<number>(120);
-  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
-  const [isTimedGameOver, setIsTimedGameOver] = useState<boolean>(false);
-
   // Inspector & Interactive highlights
   const [highlightedPath, setHighlightedPath] = useState<number[] | null>(null);
   const [hintInfo, setHintInfo] = useState<{
@@ -64,8 +56,6 @@ export default function App() {
   } | null>(null);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState<boolean>(false);
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
   // Synchronize dark theme class with document element
   useEffect(() => {
     if (theme === 'slate' || theme === 'emerald') {
@@ -74,28 +64,6 @@ export default function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [theme]);
-
-  // Timed mode countdown
-  useEffect(() => {
-    if (mode === 'timed' && isTimerRunning && timeRemaining > 0) {
-      timerRef.current = setTimeout(() => {
-        setTimeRemaining(prev => {
-          if (prev <= 1) {
-            setIsTimerRunning(false);
-            setIsTimedGameOver(true);
-            fireMilestoneConfetti();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    }
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [mode, isTimerRunning, timeRemaining]);
 
   // Handle start or reset of game board
   const startNewGame = useCallback(() => {
@@ -107,26 +75,7 @@ export default function App() {
     setLastWordTime(0);
     setHighlightedPath(null);
     setHintInfo(null);
-    setIsTimedGameOver(false);
-
-    if (mode === 'timed') {
-      setTimeRemaining(120);
-      setIsTimerRunning(true);
-    }
-  }, [mode]);
-
-  // Change game mode
-  const handleChangeMode = (newMode: GameMode) => {
-    setMode(newMode);
-    if (newMode === 'timed') {
-      setTimeRemaining(120);
-      setIsTimerRunning(true);
-      setIsTimedGameOver(false);
-    } else {
-      setIsTimerRunning(false);
-      setIsTimedGameOver(false);
-    }
-  };
+  }, []);
 
   const outstandingWords = useMemo(() => {
     const foundSet = new Set(foundWords.map(w => w.word));
@@ -235,17 +184,12 @@ export default function App() {
         setTimeout(() => fireMilestoneConfetti(), 300);
       }
 
-      // Start timer on first word in timed mode if not already started
-      if (mode === 'timed' && !isTimerRunning && timeRemaining > 0 && !isTimedGameOver) {
-        setIsTimerRunning(true);
-      }
-
       return {
         ...validation,
         scoreBreakdown
       };
     },
-    [foundWords, lastWordTime, streak, board.solvableWords.length, mode, isTimerRunning, timeRemaining, isTimedGameOver]
+    [foundWords, lastWordTime, streak, board.solvableWords.length]
   );
 
   // Request a hint for an undiscovered word (prioritizes 5, 6, 7, and 8-letter words)
@@ -364,22 +308,13 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-2.5 sm:px-8 py-2.5 sm:py-5 flex flex-col">
-        {/* Game HUD (Score, Mode, Timer, Streak) */}
+        {/* Game HUD (Words Found, Streak, Score) */}
         <div className="mb-3 sm:mb-4">
           <GameHUD
-            mode={mode}
-            onChangeMode={handleChangeMode}
             wordsFoundCount={foundWords.length}
             totalSolvableCount={board.solvableWords.length}
             score={score}
             streak={streak}
-            timeRemaining={timeRemaining}
-            isTimerRunning={isTimerRunning}
-            onRestartTimer={() => {
-              setTimeRemaining(120);
-              setIsTimerRunning(true);
-              setIsTimedGameOver(false);
-            }}
           />
         </div>
 
@@ -429,64 +364,6 @@ export default function App() {
         isOpen={isHowToPlayOpen}
         onClose={() => setIsHowToPlayOpen(false)}
       />
-
-      {/* Timed Mode Game Over Modal */}
-      {isTimedGameOver && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-black/10 dark:border-white/10 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 mx-auto flex items-center justify-center mb-3">
-              <Trophy className="w-6 h-6" />
-            </div>
-            <h3 className="font-display font-extrabold text-2xl text-slate-900 dark:text-white mb-1">
-              Time&apos;s Up!
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              2-Minute Blitz Round Complete
-            </p>
-
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-black/5 dark:border-white/5 space-y-2 mb-5">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-500 dark:text-slate-400">Words Discovered:</span>
-                <strong className="font-mono-nums text-slate-900 dark:text-white text-base">
-                  {foundWords.length}
-                </strong>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-500 dark:text-slate-400">Total Score:</span>
-                <strong className="font-mono-nums text-amber-600 dark:text-amber-400 text-lg font-bold">
-                  {score} pts
-                </strong>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setIsTimedGameOver(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-black/10 dark:border-white/10 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer text-slate-700 dark:text-slate-300"
-                >
-                  Inspect Words
-                </button>
-                <button
-                  onClick={startNewGame}
-                  className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Play Again</span>
-                </button>
-              </div>
-
-              <button
-                onClick={handleShare}
-                className="w-full py-2 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-                <span>{isCopied ? 'Link Copied to Clipboard!' : 'Share Your Score with Friends'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

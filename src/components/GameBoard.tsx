@@ -4,7 +4,7 @@ import { Sparkles, Lightbulb, Undo2, Zap, Star } from 'lucide-react';
 import { BoardTile, WordValidationResult, ScoreBreakdown } from '../types.ts';
 import { areNeighbors } from '../data/boardGenerator.ts';
 import { soundEffects } from '../utils/audio.ts';
-import { LETTER_RARITY_CONFIG, getBaseLengthPoints } from '../utils/scoring.ts';
+import { LETTER_RARITY_CONFIG } from '../utils/scoring.ts';
 
 interface GameBoardProps {
   tiles: BoardTile[];
@@ -336,13 +336,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   };
 
   const activePath = highlightedPath || selectedPath;
-  const currentLetters = activePath.map(i => tiles[i]?.letter || '').join('');
-
-  // Calculate live rare letter bonus for the currently selected path
-  const currentRareBonus = activePath.reduce((acc, idx) => {
-    const letter = tiles[idx]?.letter;
-    return acc + (LETTER_RARITY_CONFIG[letter]?.bonus || 0);
-  }, 0);
 
   return (
     <div className="flex flex-col items-center w-full max-w-md mx-auto select-none">
@@ -366,119 +359,32 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Word Composition Ribbon & Live Scoring */}
-      <div className="w-full mb-3.5">
-        <motion.div
-          key={shakeKey}
-          animate={shakeKey > 0 ? { x: [-8, 8, -6, 6, -3, 3, 0] } : {}}
-          transition={{ duration: 0.35 }}
-          className={`flex flex-col gap-1.5 px-4 py-2.5 rounded-xl border transition-colors ${
-            statusMessage.type === 'success'
-              ? 'bg-emerald-500/10 border-emerald-500/30 dark:border-emerald-500/40'
-              : statusMessage.type === 'error'
-              ? 'bg-rose-500/10 border-rose-500/30 dark:border-rose-500/40'
-              : statusMessage.type === 'warning'
-              ? 'bg-amber-500/10 border-amber-500/30 dark:border-amber-500/40'
-              : 'bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            {/* Dynamic letter composition slots (4 to 16 letters) */}
-            {activePath.length === 0 ? (
-              <div className="flex items-center gap-1 sm:gap-2">
-                {[0, 1, 2, 3].map((slotIdx) => (
-                  <div
-                    key={slotIdx}
-                    className="w-7 h-8 sm:w-9 sm:h-10 rounded-lg border-2 border-dashed border-black/15 dark:border-white/20 flex items-center justify-center text-slate-400/50 font-display font-bold text-xs sm:text-sm"
-                  >
-                    •
-                  </div>
-                ))}
-                <span className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 ml-0.5 sm:ml-1">
-                  4 - 16 L
-                </span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto max-w-[150px] xs:max-w-[200px] sm:max-w-[250px] py-0.5 scrollbar-none">
-                {activePath.map((tileIdx, stepIdx) => {
-                  const letter = tiles[tileIdx]?.letter || '';
-                  const rarity = LETTER_RARITY_CONFIG[letter]?.bonus || 0;
-
-                  return (
-                    <div key={`ribbon-${tileIdx}-${stepIdx}`} className="flex flex-col items-center shrink-0">
-                      <div className="relative min-w-[26px] h-7.5 sm:min-w-[32px] sm:h-9 px-1 rounded-lg flex items-center justify-center font-display text-sm sm:text-lg font-bold bg-amber-500 text-white shadow-xs transition-all">
-                        {letter}
-                        {rarity > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 px-1 py-0.2 bg-purple-600 text-[8px] font-extrabold text-white rounded-full shadow-xs">
-                            +{rarity}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Live point preview, submit action button, and letter count */}
-            <div className="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-2 text-right shrink-0">
-              {/* Tap-mode explicit submit button when word is at least 4 letters */}
-              {selectedPath.length >= 4 && !highlightedPath && (
-                <button
-                  onClick={() => evaluateWordPath(selectedPath)}
-                  className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1 cursor-pointer active:scale-95 min-h-[32px]"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Submit</span>
-                </button>
-              )}
-
-              <div>
-                <div className="flex items-center justify-end gap-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  <span className="font-mono-nums font-bold text-amber-600 dark:text-amber-400">
-                    {activePath.length}
-                  </span>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">/16</span>
-                  {activePath.length >= 4 && (
-                    <span className="ml-1 text-emerald-600 dark:text-emerald-400 font-bold font-mono-nums text-[11px]">
-                      ({getBaseLengthPoints(activePath.length)}{currentRareBonus > 0 ? `+${currentRareBonus}` : ''}p)
-                    </span>
-                  )}
-                </div>
-                <p
-                  className={`text-[10px] sm:text-[11px] truncate max-w-[130px] sm:max-w-[160px] ${
-                    statusMessage.type === 'success'
-                      ? 'text-emerald-600 dark:text-emerald-400 font-medium'
-                      : statusMessage.type === 'error'
-                      ? 'text-rose-600 dark:text-rose-400 font-medium'
-                      : statusMessage.type === 'warning'
-                      ? 'text-amber-600 dark:text-amber-400 font-medium'
-                      : 'text-slate-500 dark:text-slate-400'
-                  }`}
-                >
-                  {statusMessage.text}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Secondary validation details line */}
-          {statusMessage.details && (
-            <div className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-between border-t border-black/5 dark:border-white/5 pt-1">
-              <span>{statusMessage.details}</span>
-              <span className="font-medium text-amber-600 dark:text-amber-400">
-                English Dictionary (4-16 L)
-              </span>
-            </div>
-          )}
-        </motion.div>
-      </div>
-
       {/* 4x4 Grid Container */}
-      <div
+      <motion.div
         ref={containerRef}
+        key={shakeKey}
+        animate={shakeKey > 0 ? { x: [-8, 8, -6, 6, -3, 3, 0] } : {}}
+        transition={{ duration: 0.35 }}
         className="relative w-full aspect-square p-2 sm:p-3 bg-slate-100/90 dark:bg-slate-900/90 rounded-2xl border border-black/10 dark:border-white/15 shadow-inner touch-none backdrop-blur-sm"
       >
+        {/* Floating status warning / error banner */}
+        <AnimatePresence>
+          {statusMessage.text && statusMessage.type !== 'idle' && statusMessage.type !== 'success' && (
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className={`absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3.5 py-1.5 rounded-xl shadow-lg text-xs font-semibold backdrop-blur-md border pointer-events-none whitespace-nowrap ${
+                statusMessage.type === 'error'
+                  ? 'bg-rose-950/90 text-rose-200 border-rose-500/40'
+                  : 'bg-amber-950/90 text-amber-200 border-amber-500/40'
+              }`}
+            >
+              {statusMessage.text}
+            </motion.div>
+          )}
+        </AnimatePresence>
         {/* Dynamic SVG Connection Line Overlay */}
         <svg
           className="absolute inset-0 pointer-events-none w-full h-full z-10"
@@ -708,11 +614,21 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
 
-      {/* Grid Utility Bar: Clear path, Active Tiles Progress, Hint button */}
+      {/* Grid Utility Bar: Clear path, Submit Word, Active Tiles Progress, Hint button */}
       <div className="flex items-center justify-between w-full mt-2.5 px-0.5 text-xs gap-2 flex-wrap">
         <div className="flex items-center gap-1.5">
+          {selectedPath.length >= 4 && !highlightedPath && (
+            <button
+              onClick={() => evaluateWordPath(selectedPath)}
+              className="flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all cursor-pointer min-h-[36px] shadow-sm active:scale-95 text-xs"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Submit ({selectedPath.length}L)</span>
+            </button>
+          )}
+
           {selectedPath.length > 0 && (
             <button
               onClick={() => {
